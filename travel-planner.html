@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轻游迹 TripLite - 旅行规划助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            /* 主色调 - 清新蓝绿 */
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --primary-light: #22d3ee;
+            --secondary: #7c3aed;
+            /* 背景色 */
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e293b;
+            /* 卡片背景 */
+            --card-bg: #ffffff;
+            /* 文字颜色 */
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-white: #ffffff;
+            /* 边框 */
+            --border-color: #e2e8f0;
+            /* 功能色 */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a7c 50%, #1e3a5f 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        /* 品牌标题 */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .brand-header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+        .brand-header .slogan {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .card-title {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .card-title .icon {
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f8fafc;
+            color: var(--text-primary);
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1);
+        }
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: var(--text-muted);
+        }
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(8, 145, 178, 0.3);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-secondary);
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            box-shadow: none;
+        }
+        .btn-outline:hover {
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .btn-danger {
+            background: var(--danger);
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+        }
+        /* 登录注册样式 */
+        .auth-container {
+            text-align: center;
+            padding: 40px 24px;
+        }
+        .auth-logo {
+            font-size: 72px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 6px;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .auth-tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2);
+        }
+        .auth-footer {
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        /* 清单样式 */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .category-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+        .category-tabs::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        .checklist-item:hover {
+            background: #f1f5f9;
+            border-color: var(--border-color);
+        }
+        .checklist-item.checked {
+            opacity: 0.5;
+            background: #f1f5f9;
+        }
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 14px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+        .checklist-item.checked span {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        .checklist-item span {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .add-item-form input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        .add-item-form button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        /* 行程规划样式 */
+        .day-plan {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+        }
+        .day-plan h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .day-plan input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            background: #ffffff;
+        }
+        .delete-btn {
+            background: var(--danger);
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        /* 进度条 */
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .progress-bar {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        /* 目的地卡片 */
+        .destination-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, #ecfeff 0%, #f0f9ff 100%);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border: 1px solid #cffafe;
+        }
+        .destination-icon {
+            font-size: 48px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .destination-details h3 {
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .destination-details p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 6px;
+        }
+        /* 隐藏/显示 */
+        .hidden {
+            display: none !important;
+        }
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+        .nav-item {
+            padding: 14px 28px;
+            background: #ffffff;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-item:hover {
+            transform: translateY(-2px);
+        }
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+            box-shadow: 0 6px 24px rgba(8, 145, 178, 0.3);
+        }
+        .page {
+            padding-bottom: 90px;
+        }
+        /* 本地存储提示 */
+        .storage-notice {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            margin-top: 24px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+        }
+        /* 用户信息栏 */
+        .user-bar {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .user-name {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        /* 语言切换按钮 */
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 200;
+            transition: all 0.3s;
+            border: 1px solid rgba(8, 145, 178, 0.2);
+        }
+        .lang-switch:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+        }
+        .lang-icon {
+            font-size: 18px;
+        }
+        .lang-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        /* 欢迎动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        /* 英文模式适配 */
+        body.en .brand span {
+            font-size: 13px;
+        }
+        /* 空状态 */
+        .empty-state {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        /* 分类标题 */
+        .category-title {
+            color: var(--primary);
+            font-size: 15px;
+            font-weight: 600;
+            margin: 20px 0 12px;
+            padding-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 语言切换按钮 -->
+    <div class="lang-switch" onclick="toggleLanguage()">
+        <span class="lang-icon">🌐</span>
+        <span class="lang-text" id="lang-text">EN</span>
+    </div>
+
+    <div class="container">
+        <!-- 品牌标题 -->
+        <div class="brand-header">
+            <h1 data-zh="轻游迹" data-en="TripLite">轻游迹</h1>
+            <p class="slogan" data-zh="TripLite - 让旅行更轻松" data-en="TripLite - Travel Made Easy">TripLite - 让旅行更轻松</p>
+        </div>
+
+        <!-- 登录注册页面 -->
+        <div id="page-auth" class="fade-in">
+            <div class="card">
+                <div class="auth-container">
+                    <div class="auth-logo">🗺️</div>
+
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" onclick="switchAuthTab('login')" data-zh="登录" data-en="Login">登录</div>
+                        <div class="auth-tab" onclick="switchAuthTab('register')" data-zh="注册" data-en="Register">注册</div>
+                    </div>
+
+                    <!-- 登录表单 -->
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label data-zh="手机号 / 邮箱" data-en="Phone / Email">手机号 / 邮箱</label>
+                            <input type="text" id="login-account" data-ph-zh="请输入手机号或邮箱" data-ph-en="Enter phone or email" placeholder="请输入手机号或邮箱">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="密码" data-en="Password">密码</label>
+                            <input type="password" id="login-password" data-ph-zh="请输入密码" data-ph-en="Enter password" placeholder="请输入密码">
+                        </div>
+                        <button type="button" class="btn" onclick="handleLogin()" data-zh="登 录" data-en="Login">登 录</button>
+                        <p class="auth-footer">
+                            <span data-zh="忘记密码？" data-en="Forgot password?">忘记密码？</span> <a href="#" onclick="alert('请联系客服重置密码')" data-zh="找回密码" data-en="Reset Password">找回密码</a>
+                        </p>
+                    </form>
+
+                    <!-- 注册表单 -->
+                    <form id="register-form" class="auth-form hidden">
+                        <div class="form-group">
+                            <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                            <input type="tel" id="register-phone" data-ph-zh="请输入手机号" data-ph-en="Enter phone number" placeholder="请输入手机号">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="验证码" data-en="Verification Code">验证码</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="register-code" data-ph-zh="请输入验证码" data-ph-en="Enter code" placeholder="请输入验证码" style="flex: 1;">
+                                <button type="button" class="btn btn-outline" style="width: auto;" onclick="sendCode()" data-zh="获取验证码" data-en="Get Code">获取验证码</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="设置密码" data-en="Set Password">设置密码</label>
+                            <input type="password" id="register-password" data-ph-zh="请设置 6 位以上密码" data-ph-en="6+ characters" placeholder="请设置 6 位以上密码">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="昵称" data-en="Nickname">昵称</label>
+                            <input type="text" id="register-nickname" data-ph-zh="给自己起个好听的名字" data-ph-en="Your nickname" placeholder="给自己起个好听的名字">
+                        </div>
+                        <button type="button" class="btn" onclick="handleRegister()" data-zh="注 册" data-en="Register">注 册</button>
+                        <p class="auth-footer">
+                            <span data-zh="已有账号？" data-en="Have an account?">已有账号？</span> <a href="#" onclick="switchAuthTab('login')" data-zh="立即登录" data-en="Login Now">立即登录</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <p class="storage-notice" data-zh="🔒 本地演示版本，数据仅保存在您的设备中" data-en="🔒 Demo version, data saved locally on your device">🔒 本地演示版本，数据仅保存在您的设备中</p>
+        </div>
+
+        <!-- 主页面 -->
+        <div id="page-main" class="hidden">
+            <!-- 用户信息栏 -->
+            <div class="user-bar">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">👤</div>
+                    <div class="user-name" id="user-name">游客</div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()" data-zh="退出" data-en="Logout">退出</button>
+            </div>
+
+            <!-- 页面 1: 旅行规划 -->
+            <div id="page-plan" class="page">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📍</span>
+                        <span data-zh="目的地信息" data-en="Destination Info">目的地信息</span>
+                    </div>
+                    <div class="destination-info">
+                        <div class="destination-icon" id="dest-icon">🏖️</div>
+                        <div class="destination-details">
+                            <h3 id="dest-name" data-zh="未设置目的地" data-en="No destination set">未设置目的地</h3>
+                            <p id="dest-dates" data-zh="暂无行程日期" data-en="No dates set">暂无行程日期</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="目的地" data-en="Destination">目的地</label>
+                        <input type="text" id="destination" data-ph-zh="例如：三亚、巴黎、东京" data-ph-en="e.g., Sanya, Paris, Tokyo" placeholder="例如：三亚、巴黎、东京">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="出发日期" data-en="Departure Date">出发日期</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="返回日期" data-en="Return Date">返回日期</label>
+                        <input type="date" id="end-date">
+                    </div>
+                    <button class="btn" onclick="saveDestination()" data-zh="保存目的地" data-en="Save Destination">保存目的地</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📅</span>
+                        <span data-zh="行程安排" data-en="Itinerary">行程安排</span>
+                    </div>
+                    <div id="day-plans"></div>
+                    <button class="btn btn-secondary" onclick="addDayPlan()" data-zh="+ 添加一天行程" data-en="+ Add Day">+ 添加一天行程</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📝</span>
+                        <span data-zh="备注事项" data-en="Notes">备注事项</span>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="notes" rows="4" data-ph-zh="记录重要事项，如航班号、酒店地址、紧急联系人等" data-ph-en="Important info: flight numbers, hotel address, emergency contacts" placeholder="记录重要事项，如航班号、酒店地址、紧急联系人等"></textarea>
+                    </div>
+                    <button class="btn" onclick="saveNotes()" data-zh="保存备注" data-en="Save Notes">保存备注</button>
+                </div>
+            </div>
+
+            <!-- 页面 2: 旅行清单 -->
+            <div id="page-checklist" class="page hidden">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">🎒</span>
+                        <span data-zh="旅行打包清单" data-en="Packing Checklist">旅行打包清单</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span data-zh="打包进度" data-en="Packing Progress">打包进度</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="category-tabs">
+                        <div class="tab active" data-category="all" data-zh="全部" data-en="All">全部</div>
+                        <div class="tab" data-category="clothes" data-zh="👔 衣物" data-en="👔 Clothes">👔 衣物</div>
+                        <div class="tab" data-category="toiletries" data-zh="🧴 洗漱用品" data-en="🧴 Toiletries">🧴 洗漱用品</div>
+                        <div class="tab" data-category="electronics" data-zh="🔌 电子产品" data-en="🔌 Electronics">🔌 电子产品</div>
+                        <div class="tab" data-category="documents" data-zh="📄 证件" data-en="📄 Documents">📄 证件</div>
+                        <div class="tab" data-category="medicine" data-zh="💊 药品" data-en="💊 Medicine">💊 药品</div>
+                        <div class="tab" data-category="other" data-zh="📦 其他" data-en="📦 Other">📦 其他</div>
+                    </div>
+
+                    <div id="checklist-container"></div>
+
+                    <div class="add-item-form">
+                        <input type="text" id="new-item" data-ph-zh="添加自定义物品" data-ph-en="Add custom item" placeholder="添加自定义物品">
+                        <select id="new-item-category" style="padding: 12px; border-radius: 10px; border: 2px solid var(--border-color);">
+                            <option value="other" data-zh="其他" data-en="Other">其他</option>
+                            <option value="clothes" data-zh="衣物" data-en="Clothes">衣物</option>
+                            <option value="toiletries" data-zh="洗漱用品" data-en="Toiletries">洗漱用品</option>
+                            <option value="electronics" data-zh="电子产品" data-en="Electronics">电子产品</option>
+                            <option value="documents" data-zh="证件" data-en="Documents">证件</option>
+                            <option value="medicine" data-zh="药品" data-en="Medicine">药品</option>
+                        </select>
+                        <button onclick="addCustomItem()" data-zh="添加" data-en="Add">添加</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <button class="btn btn-danger" onclick="resetChecklist()" data-zh="重置清单" data-en="Reset Checklist">重置清单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav hidden" id="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('plan')">
+            <span>📅</span>
+            <span data-zh="行程规划" data-en="Plan">行程规划</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('checklist')">
+            <span>🎒</span>
+            <span data-zh="打包清单" data-en="Checklist">打包清单</span>
+        </div>
+    </div>
+
+    <p class="storage-notice hidden" id="main-notice" data-zh="💾 数据自动保存到本地，下次打开自动加载" data-en="💾 Data auto-saved locally, loads on next visit">💾 数据自动保存到本地，下次打开自动加载</p>
+
+    <script>
+        // 语言配置
+        let currentLang = 'zh';
+
+        // 默认清单数据 - 支持多语言
+        const defaultChecklist = {
+            clothes: [
+                { id: 1, text: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, checked: false },
+                { id: 2, text: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, checked: false },
+                { id: 3, text: { zh: '裤子/裙子', en: 'Pants / Skirts' }, checked: false },
+                { id: 4, text: { zh: '外套', en: 'Jacket / Coat' }, checked: false },
+                { id: 5, text: { zh: '睡衣', en: 'Pajamas' }, checked: false },
+                { id: 6, text: { zh: '运动鞋/休闲鞋', en: 'Sneakers / Casual Shoes' }, checked: false },
+                { id: 7, text: { zh: '拖鞋', en: 'Slippers' }, checked: false },
+                { id: 8, text: { zh: '帽子/围巾', en: 'Hat / Scarf' }, checked: false }
+            ],
+            toiletries: [
+                { id: 11, text: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, checked: false },
+                { id: 12, text: { zh: '洗发水/沐浴露', en: 'Shampoo / Body Wash' }, checked: false },
+                { id: 13, text: { zh: '毛巾', en: 'Towel' }, checked: false },
+                { id: 14, text: { zh: '护肤品', en: 'Skincare Products' }, checked: false },
+                { id: 15, text: { zh: '防晒霜', en: 'Sunscreen' }, checked: false },
+                { id: 16, text: { zh: '剃须刀', en: 'Razor' }, checked: false }
+            ],
+            electronics: [
+                { id: 21, text: { zh: '手机/充电器', en: 'Phone / Charger' }, checked: false },
+                { id: 22, text: { zh: '充电宝', en: 'Power Bank' }, checked: false },
+                { id: 23, text: { zh: '耳机', en: 'Headphones' }, checked: false },
+                { id: 24, text: { zh: '相机', en: 'Camera' }, checked: false },
+                { id: 25, text: { zh: '转换插头（出国）', en: 'Adapter (for abroad)' }, checked: false }
+            ],
+            documents: [
+                { id: 31, text: { zh: '身份证/护照', en: 'ID Card / Passport' }, checked: false },
+                { id: 32, text: { zh: '机票/车票', en: 'Flight / Train Tickets' }, checked: false },
+                { id: 33, text: { zh: '酒店预订单', en: 'Hotel Reservation' }, checked: false },
+                { id: 34, text: { zh: '银行卡/现金', en: 'Bank Card / Cash' }, checked: false }
+            ],
+            medicine: [
+                { id: 41, text: { zh: '感冒药', en: 'Cold Medicine' }, checked: false },
+                { id: 42, text: { zh: '肠胃药', en: 'Stomach Medicine' }, checked: false },
+                { id: 43, text: { zh: '创可贴', en: 'Band-aids' }, checked: false },
+                { id: 44, text: { zh: '晕车药', en: 'Motion Sickness Pills' }, checked: false }
+            ],
+            other: [
+                { id: 51, text: { zh: '雨伞/雨衣', en: 'Umbrella / Raincoat' }, checked: false },
+                { id: 52, text: { zh: '水杯', en: 'Water Bottle' }, checked: false },
+                { id: 53, text: { zh: '背包', en: 'Backpack' }, checked: false },
+                { id: 54, text: { zh: '旅行枕', en: 'Travel Pillow' }, checked: false }
+            ]
+        };
+
+        let checklistData = {};
+        let customItems = [];
+        let currentCategory = 'all';
+        let currentUser = null;
+        window.dayPlans = [];
+
+        // 初始化
+        function init() {
+            const savedLang = localStorage.getItem('tripLite_lang') || 'zh';
+            currentLang = savedLang;
+            updateLangButton();
+            checkAuth();
+        }
+
+        // 切换语言
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('tripLite_lang', currentLang);
+            updateLangButton();
+            updatePageLanguage();
+        }
+
+        // 更新语言按钮显示
+        function updateLangButton() {
+            const langText = document.getElementById('lang-text');
+            langText.textContent = currentLang === 'zh' ? 'EN' : '中文';
+        }
+
+        // 更新页面语言
+        function updatePageLanguage() {
+            document.body.classList.toggle('en', currentLang === 'en');
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+
+            // 更新所有带语言属性的元素
+            document.querySelectorAll('[data-zh]').forEach(el => {
+                const text = currentLang === 'zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+                if (text) {
+                    el.textContent = text;
+                }
+            });
+
+            // 更新 placeholder
+            document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+                const phKey = currentLang === 'zh' ? 'data-ph-zh' : 'data-ph-en';
+                const phText = el.getAttribute(phKey);
+                if (phText) {
+                    el.placeholder = phText;
+                }
+            });
+
+            // 重新渲染清单和行程
+            renderChecklist();
+            renderDayPlans();
+
+            // 更新目的地信息
+            updateDestinationInfo();
+        }
+
+        // 获取文本（支持多语言）
+        function t(zh, en) {
+            return currentLang === 'zh' ? zh : en;
+        }
+
+        // 检查登录状态
+        function checkAuth() {
+            const savedUser = localStorage.getItem('tripLite_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainPage();
+            } else {
+                showAuthPage();
+            }
+        }
+
+        // 显示认证页面
+        function showAuthPage() {
+            document.getElementById('page-auth').classList.remove('hidden');
+            document.getElementById('page-main').classList.add('hidden');
+            document.getElementById('bottom-nav').classList.add('hidden');
+            document.getElementById('main-notice').classList.add('hidden');
+        }
+
+        // 显示主页面
+        function showMainPage() {
+            document.getElementById('page-auth').classList.add('hidden');
+            document.getElementById('page-main').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('main-notice').classList.remove('hidden');
+
+            if (currentUser) {
+                document.getElementById('user-name').textContent = currentUser.nickname || t('旅行者', 'Traveler');
+                document.getElementById('user-avatar').textContent = currentUser.nickname ? currentUser.nickname[0] : '👤';
+            }
+
+            loadData();
+            renderChecklist();
+            renderDayPlans();
+            updateProgress();
+        }
+
+        // 切换认证标签
+        function switchAuthTab(type) {
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (type === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            } else {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            }
+        }
+
+        // 发送验证码
+        function sendCode() {
+            const phone = document.getElementById('register-phone').value;
+            if (!phone || phone.length < 11) {
+                alert(t('请输入有效的手机号', 'Please enter a valid phone number'));
+                return;
+            }
+            alert(t('验证码已发送：123456（演示版本）', 'Code sent: 123456 (Demo)'));
+        }
+
+        // 处理登录
+        function handleLogin() {
+            const account = document.getElementById('login-account').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!account || !password) {
+                alert(t('请输入账号和密码', 'Please enter account and password'));
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('tripLite_users') || '[]');
+            const user = users.find(u => u.account === account && u.password === password);
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('tripLite_user', JSON.stringify(user));
+                showMainPage();
+            } else {
+                alert(t('账号或密码错误（或先注册账号）', 'Incorrect account or password (or please register first)'));
+            }
+        }
+
+        // 处理注册
+        function handleRegister() {
+            const phone = document.getElementById('register-phone').value;
+            const password = document.getElementById('register-password').value;
+            const nickname = document.getElementById('register-nickname').value;
+
+            if (!phone || !password) {
+                alert(t('请填写必填项', 'Please fill in required fields'));
+                return;
+            }
+
+            if (password.length < 6) {
+                alert(t('密码至少 6 位', 'Password must be at least 6 characters'));
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('tripLite_users') || '[]');
+
+            if (users.find(u => u.account === phone)) {
+                alert(t('该手机号已注册', 'This phone number is already registered'));
+                return;
+            }
+
+            const newUser = {
+                account: phone,
+                password: password,
+                nickname: nickname || t('旅行者', 'Traveler'),
+                phone: phone
+            };
+
+            users.push(newUser);
+            localStorage.setItem('tripLite_users', JSON.stringify(users));
+
+            alert(t('注册成功！请登录', 'Registration successful! Please login'));
+            switchAuthTab('login');
+        }
+
+        // 退出登录
+        function handleLogout() {
+            if (confirm(t('确定要退出登录吗？', 'Are you sure you want to logout?'))) {
+                localStorage.removeItem('tripLite_user');
+                currentUser = null;
+                showAuthPage();
+            }
+        }
+
+        // 本地存储
+        function loadData() {
+            const userId = currentUser ? currentUser.account : 'default';
+            const saved = localStorage.getItem('tripLite_data_' + userId);
+            if (saved) {
+                const data = JSON.parse(saved);
+                checklistData = data.checklist || {};
+                customItems = data.customItems || [];
+
+                if (data.destination) {
+                    document.getElementById('destination').value = data.destination;
+                }
+                if (data.startDate) {
+                    document.getElementById('start-date').value = data.startDate;
+                }
+                if (data.endDate) {
+                    document.getElementById('end-date').value = data.endDate;
+                }
+                if (data.notes) {
+                    document.getElementById('notes').value = data.notes;
+                }
+                if (data.dayPlans) {
+                    window.dayPlans = data.dayPlans;
+                }
+
+                updateDestinationInfo();
+            } else {
+                checklistData = JSON.parse(JSON.stringify(defaultChecklist));
+                window.dayPlans = [];
+            }
+        }
+
+        function saveData() {
+            const userId = currentUser ? currentUser.account : 'default';
+            const data = {
+                checklist: checklistData,
+                customItems: customItems,
+                destination: document.getElementById('destination').value,
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                notes: document.getElementById('notes').value,
+                dayPlans: window.dayPlans || []
+            };
+            localStorage.setItem('tripLite_data_' + userId, JSON.stringify(data));
+        }
+
+        // 切换页面
+        function switchPage(page) {
+            document.getElementById('page-plan').classList.add('hidden');
+            document.getElementById('page-checklist').classList.add('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('page-' + page).classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
+        // 保存目的地
+        function saveDestination() {
+            saveData();
+            updateDestinationInfo();
+            alert(t('目的地信息已保存！', 'Destination saved!'));
+        }
+
+        function updateDestinationInfo() {
+            const dest = document.getElementById('destination').value;
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            const destNameEl = document.getElementById('dest-name');
+            const destDatesEl = document.getElementById('dest-dates');
+
+            if (dest) {
+                destNameEl.textContent = dest;
+                document.getElementById('dest-icon').textContent = '📍';
+            } else {
+                destNameEl.textContent = t('未设置目的地', 'No destination set');
+                document.getElementById('dest-icon').textContent = '🏖️';
+            }
+
+            if (start && end) {
+                const days = Math.ceil((new Date(end) - new Date(start)) / (1000*60*60*24)) + 1;
+                const dateText = currentLang === 'zh'
+                    ? `${start} 至 ${end}（共${days}天）`
+                    : `${start} to ${end} (${days} days)`;
+                destDatesEl.textContent = dateText;
+            } else {
+                destDatesEl.textContent = t('暂无行程日期', 'No dates set');
+            }
+        }
+
+        // 保存备注
+        function saveNotes() {
+            saveData();
+            alert(t('备注已保存！', 'Notes saved!'));
+        }
+
+        // 行程规划
+        function addDayPlan() {
+            const plans = window.dayPlans || [];
+            const dayNum = plans.length + 1;
+            plans.push({ day: dayNum, content: '' });
+            window.dayPlans = plans;
+            saveData();
+            renderDayPlans();
+        }
+
+        function renderDayPlans() {
+            const container = document.getElementById('day-plans');
+            const plans = window.dayPlans || [];
+            const emptyText = t('暂无行程安排，点击添加', 'No itinerary yet, click to add');
+
+            if (plans.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><p>${emptyText}</p></div>`;
+                return;
+            }
+
+            const inputPlaceholder = t('输入当天的行程安排', 'Enter itinerary for this day');
+            const deleteText = t('删除', 'Delete');
+
+            container.innerHTML = plans.map((plan, index) => `
+                <div class="day-plan">
+                    <h4>${t('第', 'Day')} ${plan.day} ${t('天', '')}</h4>
+                    <input type="text" value="${plan.content || ''}"
+                           onchange="updateDayPlan(${index}, this.value)"
+                           placeholder="${inputPlaceholder}">
+                    <button class="delete-btn" onclick="deleteDayPlan(${index})">${deleteText}</button>
+                </div>
+            `).join('');
+        }
+
+        function updateDayPlan(index, value) {
+            window.dayPlans[index].content = value;
+            saveData();
+        }
+
+        function deleteDayPlan(index) {
+            window.dayPlans.splice(index, 1);
+            saveData();
+            renderDayPlans();
+        }
+
+        // 清单功能
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            let html = '';
+
+            const categories = currentCategory === 'all'
+                ? Object.keys(checklistData)
+                : [currentCategory];
+
+            const categoryNames = {
+                clothes: { zh: '衣物', en: 'Clothes' },
+                toiletries: { zh: '洗漱用品', en: 'Toiletries' },
+                electronics: { zh: '电子产品', en: 'Electronics' },
+                documents: { zh: '证件', en: 'Documents' },
+                medicine: { zh: '药品', en: 'Medicine' },
+                other: { zh: '其他', en: 'Other' }
+            };
+
+            const customTitle = t('自定义物品', 'Custom Items');
+
+            categories.forEach(cat => {
+                const items = checklistData[cat] || [];
+
+                if (items.length > 0) {
+                    const catName = categoryNames[cat] ? categoryNames[cat][currentLang] : cat;
+                    html += `<div class="category-title">${catName}</div>`;
+                    items.forEach(item => {
+                        const itemText = typeof item.text === 'object' ? item.text[currentLang] : item.text;
+                        html += `
+                            <div class="checklist-item ${item.checked ? 'checked' : ''}"
+                                 onclick="toggleItem('${cat}', ${item.id})">
+                                <input type="checkbox" ${item.checked ? 'checked' : ''}
+                                       onclick="event.stopPropagation(); toggleItem('${cat}', ${item.id})">
+                                <span>${itemText}</span>
+                            </div>
+                        `;
+                    });
+                }
+            });
+
+            // 自定义物品
+            if (customItems.length > 0 && (currentCategory === 'all' || currentCategory === 'other')) {
+                html += `<div class="category-title">${customTitle}</div>`;
+                customItems.forEach((item, index) => {
+                    const itemText = typeof item.text === 'object' ? item.text[currentLang] : item.text;
+                    html += `
+                        <div class="checklist-item ${item.checked ? 'checked' : ''}"
+                             onclick="toggleCustomItem(${index})">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''}
+                                   onclick="event.stopPropagation(); toggleCustomItem(${index})">
+                            <span>${itemText}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (html === '') {
+                const emptyText = t('暂无物品', 'No items');
+                html = `<div class="empty-state"><div class="empty-state-icon">📦</div><p>${emptyText}</p></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleItem(category, itemId) {
+            const item = checklistData[category].find(i => i.id === itemId);
+            if (item) {
+                item.checked = !item.checked;
+                saveData();
+                renderChecklist();
+                updateProgress();
+            }
+        }
+
+        function toggleCustomItem(index) {
+            customItems[index].checked = !customItems[index].checked;
+            saveData();
+            renderChecklist();
+            updateProgress();
+        }
+
+        function addCustomItem() {
+            const input = document.getElementById('new-item');
+            const category = document.getElementById('new-item-category').value;
+            const text = input.value.trim();
+
+            if (text) {
+                customItems.push({
+                    text: { zh: text, en: text },
+                    category: category,
+                    checked: false
+                });
+                saveData();
+                renderChecklist();
+                input.value = '';
+            }
+        }
+
+        function resetChecklist() {
+            if (confirm(t('确定要重置所有清单吗？', 'Are you sure you want to reset the checklist?'))) {
+                checklistData = JSON.parse(JSON.stringify(defaultChecklist));
+                customItems = [];
+                saveData();
+                renderChecklist();
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            let total = 0;
+            let checked = 0;
+
+            Object.values(checklistData).forEach(items => {
+                items.forEach(item => {
+                    total++;
+                    if (item.checked) checked++;
+                });
+            });
+
+            customItems.forEach(item => {
+                total++;
+                if (item.checked) checked++;
+            });
+
+            const percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+            document.getElementById('progress-text').textContent = percent + '%';
+            document.getElementById('progress-fill').style.width = percent + '%';
+        }
+
+        // 分类标签切换
+        document.querySelectorAll('.category-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.category-tabs .tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                renderChecklist();
+            });
+        });
+
+        // 初始化运行
+        init();
+    </script>
+</body>
+</html>
