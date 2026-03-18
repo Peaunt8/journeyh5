@@ -162,8 +162,8 @@
                 <div class="auth-container">
                     <div class="auth-logo">🗺️</div>
                     <div class="auth-tabs">
-                        <div class="auth-tab active" onclick="switchAuthTab('login')" data-zh="登录" data-en="Login">登录</div>
-                        <div class="auth-tab" onclick="switchAuthTab('register')" data-zh="注册" data-en="Register">注册</div>
+                        <div class="auth-tab active" onclick="switchAuthTab('login', event)" data-zh="登录" data-en="Login">登录</div>
+                        <div class="auth-tab" onclick="switchAuthTab('register', event)" data-zh="注册" data-en="Register">注册</div>
                     </div>
 
                     <div id="auth-error" class="error-message hidden"></div>
@@ -207,7 +207,7 @@
                         </div>
                         <button type="button" class="btn" onclick="handleRegister()" data-zh="注 册" data-en="Register">注 册</button>
                         <p class="auth-footer">
-                            <span data-zh="已有账号？" data-en="Have an account?">已有账号？</span> <a href="#" onclick="switchAuthTab('login')" data-zh="立即登录" data-en="Login Now">立即登录</a>
+                            <span data-zh="已有账号？" data-en="Have an account?">已有账号？</span> <a href="#" onclick="switchAuthTab('login', event); return false;" data-zh="立即登录" data-en="Login Now">立即登录</a>
                         </p>
                     </form>
                 </div>
@@ -402,13 +402,22 @@
 
         // 初始化 Supabase 客户端
         let supabase;
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('Supabase initialized');
-        } catch (e) {
-            console.log('Supabase not available, using local storage');
-            supabase = null;
+        function initSupabase() {
+            try {
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    console.log('Supabase initialized');
+                    return true;
+                } else {
+                    console.warn('Supabase SDK not loaded, will use local storage');
+                    return false;
+                }
+            } catch (e) {
+                console.error('Supabase init error:', e);
+                return false;
+            }
         }
+        supabase = initSupabase() ? supabase : null;
 
         // ==================== 本地存储兼容模式 ====================
         const LocalDB = {
@@ -632,9 +641,17 @@
             renderTripList();
         }
 
-        function switchAuthTab(type) {
+        function switchAuthTab(type, e) {
+            if (e) e.preventDefault();
             document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            if (e && e.target) {
+                e.target.classList.add('active');
+            } else {
+                // Fallback: find the tab by type
+                const tabs = document.querySelectorAll('.auth-tab');
+                if (type === 'login' && tabs[0]) tabs[0].classList.add('active');
+                if (type === 'register' && tabs[1]) tabs[1].classList.add('active');
+            }
             clearError();
 
             if (type === 'login') {
@@ -1305,7 +1322,12 @@
         }
 
         // ==================== 启动 ====================
-        init();
+        // 确保 DOM 加载完成后执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
