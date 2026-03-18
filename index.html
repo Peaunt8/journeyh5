@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轻游迹 TripLite - 旅行规划助手</title>
+    <!-- Supabase JS SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #0891b2;
+            --primary-dark: #0e7490;
+            --primary-light: #22d3ee;
+            --secondary: #7c3aed;
+            --bg-gradient-start: #1e3a5f;
+            --bg-gradient-end: #2d5a7c;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-white: #ffffff;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a7c 50%, #1e3a5f 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        .brand-header h1 { color: #ffffff; font-size: 32px; font-weight: 700; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); letter-spacing: 2px; }
+        .brand-header .slogan { color: rgba(255,255,255,0.9); font-size: 14px; margin-top: 8px; font-weight: 400; }
+        .card { background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+        .card-title { font-size: 18px; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9; }
+        .card-title .icon { font-size: 24px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 15px; transition: all 0.3s; background: #f8fafc; color: var(--text-primary); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); background: #ffffff; box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1); }
+        .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
+        .btn { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #ffffff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.3s; box-shadow: 0 4px 14px rgba(8, 145, 178, 0.3); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4); }
+        .btn:active { transform: translateY(0); }
+        .btn-secondary { background: #f1f5f9; color: var(--text-secondary); box-shadow: none; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); box-shadow: none; }
+        .btn-outline:hover { background: var(--primary); color: #ffffff; }
+        .btn-danger { background: var(--danger); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3); }
+        .btn-sm { padding: 8px 16px; font-size: 14px; width: auto; }
+        .auth-container { text-align: center; padding: 40px 24px; }
+        .auth-logo { font-size: 72px; margin-bottom: 16px; }
+        .auth-tabs { display: flex; margin-bottom: 24px; background: #f1f5f9; border-radius: 12px; padding: 6px; }
+        .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 10px; transition: all 0.3s; color: var(--text-secondary); font-weight: 500; }
+        .auth-tab.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #ffffff; box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2); }
+        .auth-footer { margin-top: 20px; color: var(--text-muted); font-size: 13px; }
+        .auth-footer a { color: var(--primary); text-decoration: none; font-weight: 500; }
+        .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; text-align: left; }
+        .error-message::before { content: '⚠️ '; }
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 8px; }
+        .tab { padding: 8px 16px; background: #f1f5f9; border-radius: 20px; font-size: 13px; white-space: nowrap; cursor: pointer; transition: all 0.3s; color: var(--text-secondary); font-weight: 500; }
+        .tab.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #ffffff; }
+        .checklist-item { display: flex; align-items: center; padding: 14px 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; border: 1px solid transparent; }
+        .checklist-item:hover { background: #f1f5f9; border-color: var(--border-color); }
+        .checklist-item.checked { opacity: 0.5; background: #f1f5f9; }
+        .checklist-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 14px; cursor: pointer; accent-color: var(--primary); }
+        .checklist-item.checked span { text-decoration: line-through; color: var(--text-muted); }
+        .checklist-item span { color: var(--text-primary); font-size: 14px; }
+        .add-item-form { display: flex; gap: 10px; margin-top: 16px; }
+        .add-item-form input { flex: 1; padding: 12px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 14px; }
+        .add-item-form button { padding: 12px 20px; background: var(--primary); color: #ffffff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+        .day-plan { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--primary); }
+        .day-plan h4 { color: var(--primary); margin-bottom: 12px; font-weight: 600; }
+        .day-plan input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; font-size: 14px; background: #ffffff; }
+        .delete-btn { background: var(--danger); color: #ffffff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.3s; }
+        .delete-btn:hover { background: #dc2626; }
+        .progress-container { margin-bottom: 20px; }
+        .progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+        .progress-bar { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 6px; transition: width 0.5s ease; }
+        .destination-info { display: flex; align-items: center; gap: 16px; padding: 20px; background: linear-gradient(135deg, #ecfeff 0%, #f0f9ff 100%); border-radius: 14px; margin-bottom: 20px; border: 1px solid #cffafe; }
+        .destination-icon { font-size: 48px; }
+        .destination-details h3 { color: var(--text-primary); font-size: 18px; font-weight: 600; }
+        .destination-details p { color: var(--text-secondary); font-size: 14px; margin-top: 6px; }
+        .hidden { display: none !important; }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+        .nav-item { padding: 14px 28px; background: #ffffff; border-radius: 30px; cursor: pointer; box-shadow: 0 6px 24px rgba(0,0,0,0.15); font-size: 14px; font-weight: 600; transition: all 0.3s; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+        .nav-item:hover { transform: translateY(-2px); }
+        .nav-item.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #ffffff; box-shadow: 0 6px 24px rgba(8, 145, 178, 0.3); }
+        .page { padding-bottom: 90px; }
+        .storage-notice { text-align: center; color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 24px; padding: 12px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; }
+        .user-bar { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 30px; padding: 12px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2); }
+        .user-info { display: flex; align-items: center; gap: 12px; color: #ffffff; }
+        .user-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .user-name { font-size: 15px; font-weight: 600; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .lang-switch { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.98); backdrop-filter: blur(10px); border-radius: 25px; padding: 8px 16px; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 200; transition: all 0.3s; border: 1px solid rgba(8, 145, 178, 0.2); }
+        .lang-switch:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
+        .lang-icon { font-size: 18px; }
+        .lang-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+        .fade-in { animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .empty-state { color: var(--text-muted); text-align: center; padding: 40px 20px; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+        .category-title { color: var(--primary); font-size: 15px; font-weight: 600; margin: 20px 0 12px; padding-left: 4px; }
+
+        /* 出行计划列表样式 */
+        .trip-list { margin-bottom: 20px; }
+        .trip-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #f8fafc; border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .trip-item:hover { background: #f1f5f9; }
+        .trip-item.active { border-color: var(--primary); background: linear-gradient(135deg, #ecfeff 0%, #f0f9ff 100%); }
+        .trip-item-info { flex: 1; }
+        .trip-item-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .trip-item-date { font-size: 12px; color: var(--text-muted); }
+        .trip-item-actions { display: flex; gap: 8px; }
+        .trip-item-actions button { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-edit { background: var(--warning); color: #fff; }
+        .btn-delete { background: var(--danger); color: #fff; }
+        .add-trip-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff; border-radius: 12px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .add-trip-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4); }
+        .trip-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .trip-header h3 { color: var(--text-primary); font-size: 18px; font-weight: 600; }
+        .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+        .loading-spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 400px; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-primary); color: #fff; padding: 12px 24px; border-radius: 8px; opacity: 0; transition: all 0.3s; z-index: 1001; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--danger); }
+        .toast.success { background: var(--success); }
+        body.en .brand-header h1 { font-size: 28px; }
+    </style>
+</head>
+<body>
+    <div class="lang-switch" onclick="toggleLanguage()">
+        <span class="lang-icon">🌐</span>
+        <span class="lang-text" id="lang-text">EN</span>
+    </div>
+
+    <div class="container">
+        <div class="brand-header">
+            <h1 data-zh="轻游迹" data-en="TripLite">轻游迹</h1>
+            <p class="slogan" data-zh="让旅行更轻松" data-en="Travel Made Easy">让旅行更轻松</p>
+        </div>
+
+        <!-- 登录注册页面 -->
+        <div id="page-auth" class="fade-in">
+            <div class="card">
+                <div class="auth-container">
+                    <div class="auth-logo">🗺️</div>
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" onclick="switchAuthTab('login')" data-zh="登录" data-en="Login">登录</div>
+                        <div class="auth-tab" onclick="switchAuthTab('register')" data-zh="注册" data-en="Register">注册</div>
+                    </div>
+
+                    <div id="auth-error" class="error-message hidden"></div>
+
+                    <!-- 登录表单 -->
+                    <form id="login-form" class="auth-form">
+                        <div class="form-group">
+                            <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                            <input type="tel" id="login-phone" data-ph-zh="请输入手机号" data-ph-en="Enter phone number" placeholder="请输入手机号">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="密码" data-en="Password">密码</label>
+                            <input type="password" id="login-password" data-ph-zh="请输入密码" data-ph-en="Enter password" placeholder="请输入密码">
+                        </div>
+                        <button type="button" class="btn" onclick="handleLogin()" data-zh="登 录" data-en="Login">登 录</button>
+                        <p class="auth-footer">
+                            <span data-zh="忘记密码？" data-en="Forgot password?">忘记密码？</span> <a href="#" onclick="showResetModal()" data-zh="找回密码" data-en="Reset Password">找回密码</a>
+                        </p>
+                    </form>
+
+                    <!-- 注册表单 -->
+                    <form id="register-form" class="auth-form hidden">
+                        <div class="form-group">
+                            <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                            <input type="tel" id="register-phone" data-ph-zh="请输入手机号" data-ph-en="Enter phone number" placeholder="请输入手机号">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="验证码" data-en="Verification Code">验证码</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="register-code" data-ph-zh="请输入验证码" data-ph-en="Enter code" placeholder="请输入验证码" style="flex: 1;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="sendCode()" data-zh="获取验证码" data-en="Get Code">获取验证码</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="设置密码" data-en="Set Password">设置密码</label>
+                            <input type="password" id="register-password" data-ph-zh="请设置 6 位以上密码" data-ph-en="6+ characters" placeholder="请设置 6 位以上密码">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="昵称" data-en="Nickname">昵称</label>
+                            <input type="text" id="register-nickname" data-ph-zh="给自己起个好听的名字" data-ph-en="Your nickname" placeholder="给自己起个好听的名字">
+                        </div>
+                        <button type="button" class="btn" onclick="handleRegister()" data-zh="注 册" data-en="Register">注 册</button>
+                        <p class="auth-footer">
+                            <span data-zh="已有账号？" data-en="Have an account?">已有账号？</span> <a href="#" onclick="switchAuthTab('login')" data-zh="立即登录" data-en="Login Now">立即登录</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            <p class="storage-notice" data-zh="🔒 用户数据存储在安全的云端数据库" data-en="🔒 User data stored in secure cloud database">🔒 用户数据存储在安全的云端数据库</p>
+        </div>
+
+        <!-- 主页面 -->
+        <div id="page-main" class="hidden">
+            <div class="user-bar">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">👤</div>
+                    <div class="user-name" id="user-name">游客</div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()" data-zh="退出" data-en="Logout">退出</button>
+            </div>
+
+            <!-- 页面 1: 出行计划列表 -->
+            <div id="page-trips" class="page">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📋</span>
+                        <span data-zh="我的出行计划" data-en="My Trip Plans">我的出行计划</span>
+                    </div>
+                    <div id="trip-list-container">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p data-zh="加载中..." data-en="Loading...">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 2: 旅行规划详情 -->
+            <div id="page-plan" class="page hidden">
+                <div class="card">
+                    <div class="trip-header">
+                        <h3 id="current-trip-name">行程详情</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="backToTripList()" data-zh="返回列表" data-en="Back to List">返回列表</button>
+                    </div>
+
+                    <div class="destination-info">
+                        <div class="destination-icon" id="dest-icon">🏖️</div>
+                        <div class="destination-details">
+                            <h3 id="dest-name" data-zh="未设置目的地" data-en="No destination set">未设置目的地</h3>
+                            <p id="dest-dates" data-zh="暂无行程日期" data-en="No dates set">暂无行程日期</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="目的地" data-en="Destination">目的地</label>
+                        <input type="text" id="destination" data-ph-zh="例如：三亚、巴黎、东京" data-ph-en="e.g., Sanya, Paris, Tokyo" placeholder="例如：三亚、巴黎、东京">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="出发日期" data-en="Departure Date">出发日期</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="返回日期" data-en="Return Date">返回日期</label>
+                        <input type="date" id="end-date">
+                    </div>
+                    <button class="btn" onclick="saveTripInfo()" data-zh="保存目的地" data-en="Save Destination">保存目的地</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📅</span>
+                        <span data-zh="行程安排" data-en="Itinerary">行程安排</span>
+                    </div>
+                    <div id="day-plans"></div>
+                    <button class="btn btn-secondary" onclick="addDayPlan()" data-zh="+ 添加一天行程" data-en="+ Add Day">+ 添加一天行程</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📝</span>
+                        <span data-zh="备注事项" data-en="Notes">备注事项</span>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="notes" rows="4" data-ph-zh="记录重要事项" data-ph-en="Important notes" placeholder="记录重要事项，如航班号、酒店地址、紧急联系人等"></textarea>
+                    </div>
+                    <button class="btn" onclick="saveTripNotes()" data-zh="保存备注" data-en="Save Notes">保存备注</button>
+                </div>
+            </div>
+
+            <!-- 页面 3: 旅行清单 -->
+            <div id="page-checklist" class="page hidden">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">🎒</span>
+                        <span data-zh="旅行打包清单" data-en="Packing Checklist">旅行打包清单</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span data-zh="打包进度" data-en="Packing Progress">打包进度</span>
+                            <span id="progress-text">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="category-tabs">
+                        <div class="tab active" data-category="all" data-zh="全部" data-en="All">全部</div>
+                        <div class="tab" data-category="clothes" data-zh="👔 衣物" data-en="👔 Clothes">👔 衣物</div>
+                        <div class="tab" data-category="toiletries" data-zh="🧴 洗漱用品" data-en="🧴 Toiletries">🧴 洗漱用品</div>
+                        <div class="tab" data-category="electronics" data-zh="🔌 电子产品" data-en="🔌 Electronics">🔌 电子产品</div>
+                        <div class="tab" data-category="documents" data-zh="📄 证件" data-en="📄 Documents">📄 证件</div>
+                        <div class="tab" data-category="medicine" data-zh="💊 药品" data-en="💊 Medicine">💊 药品</div>
+                        <div class="tab" data-category="other" data-zh="📦 其他" data-en="📦 Other">📦 其他</div>
+                    </div>
+
+                    <div id="checklist-container"></div>
+
+                    <div class="add-item-form">
+                        <input type="text" id="new-item" data-ph-zh="添加自定义物品" data-ph-en="Add custom item" placeholder="添加自定义物品">
+                        <select id="new-item-category" style="padding: 12px; border-radius: 10px; border: 2px solid var(--border-color);">
+                            <option value="other" data-zh="其他" data-en="Other">其他</option>
+                            <option value="clothes" data-zh="衣物" data-en="Clothes">衣物</option>
+                            <option value="toiletries" data-zh="洗漱用品" data-en="Toiletries">洗漱用品</option>
+                            <option value="electronics" data-zh="电子产品" data-en="Electronics">电子产品</option>
+                            <option value="documents" data-zh="证件" data-en="Documents">证件</option>
+                            <option value="medicine" data-zh="药品" data-en="Medicine">药品</option>
+                        </select>
+                        <button onclick="addCustomItem()" data-zh="添加" data-en="Add">添加</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <button class="btn btn-danger" onclick="resetChecklist()" data-zh="重置清单" data-en="Reset Checklist">重置清单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav hidden" id="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('trips')">
+            <span>📋</span>
+            <span data-zh="出行计划" data-en="Trips">出行计划</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('plan')" id="nav-plan">
+            <span>📅</span>
+            <span data-zh="行程规划" data-en="Plan">行程规划</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('checklist')" id="nav-checklist">
+            <span>🎒</span>
+            <span data-zh="打包清单" data-en="Checklist">打包清单</span>
+        </div>
+    </div>
+
+    <!-- 新建/编辑出行计划弹窗 -->
+    <div id="trip-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" id="modal-title" data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</h3>
+            <div class="form-group">
+                <label data-zh="计划名称" data-en="Plan Name">计划名称</label>
+                <input type="text" id="trip-name-input" data-ph-zh="例如：2024 日本之旅" data-ph-en="e.g., Japan Trip 2024" placeholder="例如：2024 日本之旅">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn" onclick="confirmCreateTrip()" data-zh="创建" data-en="Create">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重置密码弹窗 -->
+    <div id="reset-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" data-zh="找回密码" data-en="Reset Password">找回密码</h3>
+            <div class="form-group">
+                <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                <input type="tel" id="reset-phone" data-ph-zh="请输入注册手机号" data-ph-en="Enter registered phone" placeholder="请输入注册手机号">
+            </div>
+            <div class="form-group">
+                <label data-zh="新密码" data-en="New Password">新密码</label>
+                <input type="password" id="reset-password" data-ph-zh="请输入新密码" data-ph-en="Enter new password" placeholder="请输入新密码">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeResetModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn" onclick="confirmResetPassword()" data-zh="确认重置" data-en="Confirm">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ==================== Supabase 配置 ====================
+        const SUPABASE_URL = 'https://ifokqgqwoquvlxyjtqlp.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_wtqpXjzbbA3_KncLfXw5BQ_p6iDLRYF';
+
+        // 初始化 Supabase 客户端
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log('Supabase initialized');
+        } catch (e) {
+            console.log('Supabase not available, using local storage');
+            supabase = null;
+        }
+
+        // ==================== 本地存储兼容模式 ====================
+        const LocalDB = {
+            users: [],
+            trips: [],
+            tripData: {},
+
+            save() {
+                localStorage.setItem('tripLite_localDB', JSON.stringify({
+                    users: this.users,
+                    trips: this.trips,
+                    tripData: this.tripData
+                }));
+            },
+
+            load() {
+                const saved = localStorage.getItem('tripLite_localDB');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.users = data.users || [];
+                    this.trips = data.trips || [];
+                    this.tripData = data.tripData || {};
+                }
+            },
+
+            async signUp(phone, password, nickname) {
+                this.load();
+                if (this.users.find(u => u.phone === phone)) {
+                    throw new Error('该手机号已注册');
+                }
+                const user = { phone, password, nickname, createdAt: new Date().toISOString() };
+                this.users.push(user);
+                this.save();
+                return { user, session: { user } };
+            },
+
+            async signIn(phone, password) {
+                this.load();
+                const user = this.users.find(u => u.phone === phone && u.password === password);
+                if (!user) {
+                    throw new Error('手机号或密码错误');
+                }
+                return { user, session: { user } };
+            },
+
+            async insert(table, data) {
+                this.load();
+                if (table === 'trips') {
+                    const trip = { ...data, id: Date.now().toString() };
+                    this.trips.push(trip);
+                    this.tripData[trip.id] = { checklist: {}, dayPlans: [], notes: '', destination: '' };
+                    this.save();
+                    return { data: trip, error: null };
+                }
+                return { data: null, error: new Error('Unknown table') };
+            },
+
+            async from(table) {
+                this.load();
+                return {
+                    select: () => ({
+                        eq: (column, value) => {
+                            if (table === 'trips') {
+                                const filtered = this.trips.filter(t => t[column] === value);
+                                return { data: filtered, error: null };
+                            }
+                            return { data: [], error: null };
+                        }
+                    })
+                };
+            },
+
+            async update(data) {
+                this.load();
+                return { data, error: null };
+            }
+        };
+
+        // ==================== 全局状态 ====================
+        let currentLang = 'zh';
+        let currentUser = null;
+        let currentTrip = null;
+        let checklistData = {};
+        let customItems = [];
+        let currentCategory = 'all';
+        let editingTripId = null;
+        window.dayPlans = [];
+
+        // 默认清单数据
+        const defaultChecklist = {
+            clothes: [
+                { id: 1, text: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, checked: false },
+                { id: 2, text: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, checked: false },
+                { id: 3, text: { zh: '裤子/裙子', en: 'Pants / Skirts' }, checked: false },
+                { id: 4, text: { zh: '外套', en: 'Jacket / Coat' }, checked: false },
+                { id: 5, text: { zh: '睡衣', en: 'Pajamas' }, checked: false },
+                { id: 6, text: { zh: '运动鞋/休闲鞋', en: 'Sneakers' }, checked: false },
+                { id: 7, text: { zh: '拖鞋', en: 'Slippers' }, checked: false },
+                { id: 8, text: { zh: '帽子/围巾', en: 'Hat / Scarf' }, checked: false }
+            ],
+            toiletries: [
+                { id: 11, text: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, checked: false },
+                { id: 12, text: { zh: '洗发水/沐浴露', en: 'Shampoo / Body Wash' }, checked: false },
+                { id: 13, text: { zh: '毛巾', en: 'Towel' }, checked: false },
+                { id: 14, text: { zh: '护肤品', en: 'Skincare' }, checked: false },
+                { id: 15, text: { zh: '防晒霜', en: 'Sunscreen' }, checked: false },
+                { id: 16, text: { zh: '剃须刀', en: 'Razor' }, checked: false }
+            ],
+            electronics: [
+                { id: 21, text: { zh: '手机/充电器', en: 'Phone / Charger' }, checked: false },
+                { id: 22, text: { zh: '充电宝', en: 'Power Bank' }, checked: false },
+                { id: 23, text: { zh: '耳机', en: 'Headphones' }, checked: false },
+                { id: 24, text: { zh: '相机', en: 'Camera' }, checked: false },
+                { id: 25, text: { zh: '转换插头', en: 'Adapter' }, checked: false }
+            ],
+            documents: [
+                { id: 31, text: { zh: '身份证/护照', en: 'ID / Passport' }, checked: false },
+                { id: 32, text: { zh: '机票/车票', en: 'Tickets' }, checked: false },
+                { id: 33, text: { zh: '酒店预订单', en: 'Hotel Reservation' }, checked: false },
+                { id: 34, text: { zh: '银行卡/现金', en: 'Card / Cash' }, checked: false }
+            ],
+            medicine: [
+                { id: 41, text: { zh: '感冒药', en: 'Cold Medicine' }, checked: false },
+                { id: 42, text: { zh: '肠胃药', en: 'Stomach Medicine' }, checked: false },
+                { id: 43, text: { zh: '创可贴', en: 'Band-aids' }, checked: false },
+                { id: 44, text: { zh: '晕车药', en: 'Motion Sickness Pills' }, checked: false }
+            ],
+            other: [
+                { id: 51, text: { zh: '雨伞/雨衣', en: 'Umbrella / Raincoat' }, checked: false },
+                { id: 52, text: { zh: '水杯', en: 'Water Bottle' }, checked: false },
+                { id: 53, text: { zh: '背包', en: 'Backpack' }, checked: false },
+                { id: 54, text: { zh: '旅行枕', en: 'Travel Pillow' }, checked: false }
+            ]
+        };
+
+        // ==================== 初始化 ====================
+        function init() {
+            const savedLang = localStorage.getItem('tripLite_lang') || 'zh';
+            currentLang = savedLang;
+            updateLangButton();
+            checkAuth();
+        }
+
+        // ==================== 语言切换 ====================
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('tripLite_lang', currentLang);
+            updateLangButton();
+            updatePageLanguage();
+        }
+
+        function updateLangButton() {
+            document.getElementById('lang-text').textContent = currentLang === 'zh' ? 'EN' : '中文';
+        }
+
+        function updatePageLanguage() {
+            document.body.classList.toggle('en', currentLang === 'en');
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+            document.querySelectorAll('[data-zh]').forEach(el => {
+                el.textContent = currentLang === 'zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+            });
+            document.querySelectorAll('input[placeholder]').forEach(el => {
+                const ph = currentLang === 'zh' ? el.getAttribute('data-ph-zh') : el.getAttribute('data-ph-en');
+                if (ph) el.placeholder = ph;
+            });
+            renderChecklist();
+            renderDayPlans();
+            updateDestinationInfo();
+            renderTripList();
+        }
+
+        function t(zh, en) { return currentLang === 'zh' ? zh : en; }
+
+        // ==================== Toast 提示 ====================
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ==================== 错误显示 ====================
+        function showError(message) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            setTimeout(() => errorEl.classList.add('hidden'), 5000);
+        }
+
+        function clearError() {
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        // ==================== 认证相关 ====================
+        function checkAuth() {
+            const savedUser = localStorage.getItem('tripLite_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainPage();
+            } else {
+                showAuthPage();
+            }
+        }
+
+        function showAuthPage() {
+            document.getElementById('page-auth').classList.remove('hidden');
+            document.getElementById('page-main').classList.add('hidden');
+            document.getElementById('bottom-nav').classList.add('hidden');
+        }
+
+        function showMainPage() {
+            document.getElementById('page-auth').classList.add('hidden');
+            document.getElementById('page-main').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+
+            if (currentUser) {
+                document.getElementById('user-name').textContent = currentUser.nickname || t('旅行者', 'Traveler');
+                document.getElementById('user-avatar').textContent = currentUser.nickname ? currentUser.nickname[0] : '👤';
+            }
+
+            renderTripList();
+        }
+
+        function switchAuthTab(type) {
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            clearError();
+
+            if (type === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            } else {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+            }
+        }
+
+        async function sendCode() {
+            const phone = document.getElementById('register-phone').value;
+            if (!phone || phone.length < 11) {
+                showToast(t('请输入有效的手机号', 'Please enter valid phone'), 'error');
+                return;
+            }
+            showToast(t('验证码已发送：123456', 'Code sent: 123456'), 'success');
+        }
+
+        async function handleLogin() {
+            clearError();
+            const phone = document.getElementById('login-phone').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!phone || !password) {
+                showError(t('请输入手机号和密码', 'Please enter phone and password'));
+                return;
+            }
+
+            try {
+                let result;
+                if (supabase) {
+                    result = await supabase.auth.signInWithPassword({
+                        phone: phone,
+                        password: password
+                    });
+                    if (result.error) throw result.error;
+                    currentUser = result.data.user;
+                } else {
+                    result = await LocalDB.signIn(phone, password);
+                    currentUser = result.user;
+                }
+
+                localStorage.setItem('tripLite_user', JSON.stringify(currentUser));
+                showToast(t('登录成功！', 'Login successful!'), 'success');
+                showMainPage();
+            } catch (error) {
+                let msg = error.message || t('登录失败', 'Login failed');
+                if (msg.includes('Invalid login')) msg = t('手机号或密码错误', 'Incorrect phone or password');
+                if (msg.includes('not found')) msg = t('账号不存在', 'Account not found');
+                showError(msg);
+                showToast(msg, 'error');
+            }
+        }
+
+        async function handleRegister() {
+            clearError();
+            const phone = document.getElementById('register-phone').value.trim();
+            const code = document.getElementById('register-code').value;
+            const password = document.getElementById('register-password').value;
+            const nickname = document.getElementById('register-nickname').value.trim();
+
+            if (!phone || !password) {
+                showError(t('请填写手机号和密码', 'Please fill phone and password'));
+                return;
+            }
+            if (password.length < 6) {
+                showError(t('密码至少 6 位', 'Password must be 6+ characters'));
+                return;
+            }
+            if (code !== '123456') {
+                showError(t('验证码错误', 'Invalid verification code'));
+                return;
+            }
+
+            try {
+                let result;
+                if (supabase) {
+                    result = await supabase.auth.signUp({
+                        phone: phone,
+                        password: password,
+                        options: { data: { nickname } }
+                    });
+                    if (result.error) throw result.error;
+                    currentUser = result.data.user;
+                } else {
+                    result = await LocalDB.signUp(phone, password, nickname);
+                    currentUser = result.user;
+                }
+
+                localStorage.setItem('tripLite_user', JSON.stringify(currentUser));
+                showToast(t('注册成功！', 'Registration successful!'), 'success');
+                showMainPage();
+            } catch (error) {
+                let msg = error.message || t('注册失败', 'Registration failed');
+                if (msg.includes('already')) msg = t('该手机号已注册', 'Phone already registered');
+                showError(msg);
+                showToast(msg, 'error');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm(t('确定要退出登录吗？', 'Logout confirmed?'))) {
+                if (supabase) supabase.auth.signOut();
+                localStorage.removeItem('tripLite_user');
+                currentUser = null;
+                currentTrip = null;
+                showAuthPage();
+            }
+        }
+
+        // ==================== 出行计划管理 ====================
+        async function renderTripList() {
+            const container = document.getElementById('trip-list-container');
+
+            if (!currentUser) {
+                container.innerHTML = '<div class="empty-state"><p>' + t('请先登录', 'Please login first') + '</p></div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>' + t('加载中...', 'Loading...') + '</p></div>';
+
+            try {
+                let trips;
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('trips')
+                        .select('*')
+                        .eq('user_id', currentUser.id || currentUser.phone);
+                    if (error) throw error;
+                    trips = data || [];
+                } else {
+                    LocalDB.load();
+                    trips = LocalDB.trips.filter(t => t.userId === currentUser.id || t.userId === currentUser.phone);
+                }
+
+                if (trips.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>${t('暂无出行计划，创建一个吧！', 'No trips yet, create one!')}</p>
+                        </div>
+                        <div class="add-trip-btn" onclick="showCreateModal()">
+                            <span>+</span>
+                            <span data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                trips.forEach(trip => {
+                    const isActive = currentTrip && currentTrip.id === trip.id;
+                    const dateInfo = trip.start_date ? trip.start_date : t('未设置日期', 'No date');
+                    html += `
+                        <div class="trip-item ${isActive ? 'active' : ''}" onclick="selectTrip('${trip.id}')">
+                            <div class="trip-item-info">
+                                <div class="trip-item-title">${escapeHtml(trip.name)}</div>
+                                <div class="trip-item-date">📅 ${dateInfo}${trip.destination ? ' · ' + escapeHtml(trip.destination) : ''}</div>
+                            </div>
+                            <div class="trip-item-actions">
+                                <button class="btn-edit" onclick="event.stopPropagation(); showEditModal('${trip.id}')">✏️</button>
+                                <button class="btn-delete" onclick="event.stopPropagation(); deleteTrip('${trip.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `<div class="add-trip-btn" onclick="showCreateModal()" style="margin-top: 10px;">
+                    <span>+</span>
+                    <span data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</span>
+                </div>`;
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading trips:', error);
+                container.innerHTML = '<div class="empty-state"><p>' + t('加载失败', 'Load failed') + '</p></div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function selectTrip(tripId) {
+            try {
+                let trip;
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('trips')
+                        .select('*')
+                        .eq('id', tripId)
+                        .single();
+                    if (error) throw error;
+                    trip = data;
+                } else {
+                    LocalDB.load();
+                    trip = LocalDB.trips.find(t => t.id === tripId);
+                }
+
+                currentTrip = trip;
+                localStorage.setItem('tripLite_currentTrip', JSON.stringify(trip));
+
+                // 加载行程数据
+                await loadTripData(tripId);
+
+                // 切换到行程页面
+                switchPage('plan');
+                renderTripList();
+            } catch (error) {
+                console.error('Error selecting trip:', error);
+                showToast(t('加载行程失败', 'Failed to load trip'), 'error');
+            }
+        }
+
+        async function loadTripData(tripId) {
+            try {
+                let data;
+                if (supabase) {
+                    const { data: tripData, error } = await supabase
+                        .from('trip_data')
+                        .select('*')
+                        .eq('trip_id', tripId)
+                        .single();
+                    data = tripData || { checklist: {}, custom_items: [], day_plans: [], notes: '', destination: '' };
+                } else {
+                    LocalDB.load();
+                    data = LocalDB.tripData[tripId] || { checklist: {}, custom_items: [], day_plans: [], notes: '', destination: '' };
+                }
+
+                checklistData = data.checklist || {};
+                customItems = data.custom_items || data.customItems || [];
+                window.dayPlans = data.day_plans || data.dayPlans || [];
+
+                // 填充表单
+                document.getElementById('destination').value = data.destination || '';
+                document.getElementById('notes').value = data.notes || '';
+
+                updateDestinationInfo();
+                renderDayPlans();
+                renderChecklist();
+                updateProgress();
+            } catch (error) {
+                console.error('Error loading trip data:', error);
+            }
+        }
+
+        function showCreateModal() {
+            editingTripId = null;
+            document.getElementById('modal-title').textContent = t('新建出行计划', 'New Trip Plan');
+            document.getElementById('trip-name-input').value = '';
+            document.getElementById('trip-modal').classList.remove('hidden');
+        }
+
+        function showEditModal(tripId) {
+            editingTripId = tripId;
+            document.getElementById('modal-title').textContent = t('编辑出行计划', 'Edit Trip Plan');
+
+            let trip;
+            if (supabase) {
+                supabase.from('trips').select('name').eq('id', tripId).single().then(({ data }) => {
+                    if (data) {
+                        document.getElementById('trip-name-input').value = data.name;
+                    }
+                });
+            } else {
+                LocalDB.load();
+                trip = LocalDB.trips.find(t => t.id === tripId);
+                if (trip) document.getElementById('trip-name-input').value = trip.name;
+            }
+
+            document.getElementById('trip-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('trip-modal').classList.add('hidden');
+            editingTripId = null;
+        }
+
+        async function confirmCreateTrip() {
+            const name = document.getElementById('trip-name-input').value.trim();
+            if (!name) {
+                showToast(t('请输入计划名称', 'Please enter plan name'), 'error');
+                return;
+            }
+
+            try {
+                const tripData = {
+                    name: name,
+                    user_id: currentUser.id || currentUser.phone,
+                    created_at: new Date().toISOString()
+                };
+
+                if (editingTripId) {
+                    // 编辑模式
+                    if (supabase) {
+                        await supabase.from('trips').update({ name }).eq('id', editingTripId);
+                    } else {
+                        LocalDB.load();
+                        const idx = LocalDB.trips.findIndex(t => t.id === editingTripId);
+                        if (idx >= 0) LocalDB.trips[idx].name = name;
+                        LocalDB.save();
+                    }
+                    showToast(t('更新成功！', 'Updated!'), 'success');
+                } else {
+                    // 新建模式
+                    if (supabase) {
+                        const { data, error } = await supabase.from('trips').insert([tripData]).select().single();
+                        if (error) throw error;
+
+                        // 初始化行程数据
+                        await supabase.from('trip_data').insert([{
+                            trip_id: data.id,
+                            checklist: {},
+                            custom_items: [],
+                            day_plans: [],
+                            notes: '',
+                            destination: ''
+                        }]);
+
+                        currentTrip = data;
+                    } else {
+                        LocalDB.load();
+                        const newTrip = {
+                            id: Date.now().toString(),
+                            userId: currentUser.phone,
+                            name: name,
+                            created_at: new Date().toISOString()
+                        };
+                        LocalDB.trips.push(newTrip);
+                        LocalDB.tripData[newTrip.id] = { checklist: {}, custom_items: [], day_plans: [], notes: '', destination: '' };
+                        LocalDB.save();
+                        currentTrip = newTrip;
+                    }
+                    showToast(t('创建成功！', 'Created!'), 'success');
+                }
+
+                closeModal();
+                renderTripList();
+            } catch (error) {
+                console.error('Error saving trip:', error);
+                showToast(t('操作失败', 'Operation failed'), 'error');
+            }
+        }
+
+        async function deleteTrip(tripId) {
+            if (!confirm(t('确定要删除这个出行计划吗？', 'Delete this trip?'))) return;
+
+            try {
+                if (supabase) {
+                    await supabase.from('trips').delete().eq('id', tripId);
+                    await supabase.from('trip_data').delete().eq('trip_id', tripId);
+                } else {
+                    LocalDB.load();
+                    LocalDB.trips = LocalDB.trips.filter(t => t.id !== tripId);
+                    delete LocalDB.tripData[tripId];
+                    LocalDB.save();
+                }
+
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                }
+
+                showToast(t('删除成功', 'Deleted'), 'success');
+                renderTripList();
+            } catch (error) {
+                console.error('Error deleting trip:', error);
+                showToast(t('删除失败', 'Delete failed'), 'error');
+            }
+        }
+
+        function backToTripList() {
+            switchPage('trips');
+            renderTripList();
+        }
+
+        // ==================== 行程数据保存 ====================
+        async function saveTripData() {
+            if (!currentTrip) return;
+
+            const data = {
+                checklist: checklistData,
+                custom_items: customItems,
+                day_plans: window.dayPlans,
+                notes: document.getElementById('notes').value,
+                destination: document.getElementById('destination').value
+            };
+
+            try {
+                if (supabase) {
+                    // 检查是否存在
+                    const { data: existing } = await supabase
+                        .from('trip_data')
+                        .select('id')
+                        .eq('trip_id', currentTrip.id)
+                        .single();
+
+                    if (existing) {
+                        await supabase.from('trip_data').update(data).eq('trip_id', currentTrip.id);
+                    } else {
+                        await supabase.from('trip_data').insert([{ ...data, trip_id: currentTrip.id }]);
+                    }
+                } else {
+                    LocalDB.load();
+                    LocalDB.tripData[currentTrip.id] = data;
+                    LocalDB.save();
+                }
+            } catch (error) {
+                console.error('Error saving trip data:', error);
+            }
+        }
+
+        function saveTripInfo() {
+            saveTripData();
+            updateDestinationInfo();
+
+            // 同时更新 trips 表的摘要信息
+            const tripData = {
+                destination: document.getElementById('destination').value,
+                start_date: document.getElementById('start-date').value,
+                end_date: document.getElementById('end-date').value
+            };
+
+            if (supabase && currentTrip) {
+                supabase.from('trips').update(tripData).eq('id', currentTrip.id);
+            } else if (currentTrip) {
+                LocalDB.load();
+                const idx = LocalDB.trips.findIndex(t => t.id === currentTrip.id);
+                if (idx >= 0) {
+                    LocalDB.trips[idx] = { ...LocalDB.trips[idx], ...tripData };
+                    LocalDB.save();
+                }
+            }
+
+            showToast(t('保存成功！', 'Saved!'), 'success');
+        }
+
+        function saveTripNotes() {
+            saveTripData();
+            showToast(t('备注已保存！', 'Notes saved!'), 'success');
+        }
+
+        function updateDestinationInfo() {
+            const dest = document.getElementById('destination').value;
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            if (currentTrip) {
+                document.getElementById('current-trip-name').textContent = currentTrip.name || t('行程详情', 'Trip Details');
+            }
+
+            if (dest) {
+                document.getElementById('dest-name').textContent = dest;
+                document.getElementById('dest-icon').textContent = '📍';
+            } else {
+                document.getElementById('dest-name').textContent = t('未设置目的地', 'No destination');
+                document.getElementById('dest-icon').textContent = '🏖️';
+            }
+
+            if (start && end) {
+                const days = Math.ceil((new Date(end) - new Date(start)) / (1000*60*60*24)) + 1;
+                document.getElementById('dest-dates').textContent = currentLang === 'zh'
+                    ? `${start} 至 ${end}（共${days}天）`
+                    : `${start} to ${end} (${days} days)`;
+            } else {
+                document.getElementById('dest-dates').textContent = t('暂无行程日期', 'No dates');
+            }
+        }
+
+        // ==================== 行程安排 ====================
+        function addDayPlan() {
+            const plans = window.dayPlans || [];
+            plans.push({ day: plans.length + 1, content: '' });
+            window.dayPlans = plans;
+            saveTripData();
+            renderDayPlans();
+        }
+
+        function renderDayPlans() {
+            const container = document.getElementById('day-plans');
+            const plans = window.dayPlans || [];
+
+            if (plans.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><p>${t('暂无行程安排', 'No itinerary')}</p></div>`;
+                return;
+            }
+
+            container.innerHTML = plans.map((plan, index) => `
+                <div class="day-plan">
+                    <h4>${t('第', 'Day')} ${plan.day} ${t('天', '')}</h4>
+                    <input type="text" value="${plan.content || ''}" onchange="updateDayPlan(${index}, this.value)" placeholder="${t('输入行程安排', 'Enter itinerary')}">
+                    <button class="delete-btn" onclick="deleteDayPlan(${index})">${t('删除', 'Delete')}</button>
+                </div>
+            `).join('');
+        }
+
+        function updateDayPlan(index, value) {
+            window.dayPlans[index].content = value;
+            saveTripData();
+        }
+
+        function deleteDayPlan(index) {
+            window.dayPlans.splice(index, 1);
+            saveTripData();
+            renderDayPlans();
+        }
+
+        // ==================== 打包清单 ====================
+        function renderChecklist() {
+            const container = document.getElementById('checklist-container');
+            let html = '';
+
+            const categories = currentCategory === 'all' ? Object.keys(checklistData) : [currentCategory];
+            const categoryNames = {
+                clothes: { zh: '衣物', en: 'Clothes' },
+                toiletries: { zh: '洗漱用品', en: 'Toiletries' },
+                electronics: { zh: '电子产品', en: 'Electronics' },
+                documents: { zh: '证件', en: 'Documents' },
+                medicine: { zh: '药品', en: 'Medicine' },
+                other: { zh: '其他', en: 'Other' }
+            };
+
+            categories.forEach(cat => {
+                const items = checklistData[cat] || [];
+                if (items.length > 0) {
+                    html += `<div class="category-title">${categoryNames[cat] ? categoryNames[cat][currentLang] : cat}</div>`;
+                    items.forEach(item => {
+                        const itemText = typeof item.text === 'object' ? item.text[currentLang] : item.text;
+                        html += `
+                            <div class="checklist-item ${item.checked ? 'checked' : ''}" onclick="toggleItem('${cat}', ${item.id})">
+                                <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleItem('${cat}', ${item.id})">
+                                <span>${itemText}</span>
+                            </div>
+                        `;
+                    });
+                }
+            });
+
+            if (customItems.length > 0 && (currentCategory === 'all' || currentCategory === 'other')) {
+                html += `<div class="category-title">${t('自定义物品', 'Custom Items')}</div>`;
+                customItems.forEach((item, index) => {
+                    const itemText = typeof item.text === 'object' ? item.text[currentLang] : item.text;
+                    html += `
+                        <div class="checklist-item ${item.checked ? 'checked' : ''}" onclick="toggleCustomItem(${index})">
+                            <input type="checkbox" ${item.checked ? 'checked' : ''} onclick="event.stopPropagation(); toggleCustomItem(${index})">
+                            <span>${itemText}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            if (html === '') {
+                html = `<div class="empty-state"><div class="empty-state-icon">📦</div><p>${t('暂无物品', 'No items')}</p></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function toggleItem(category, itemId) {
+            const item = checklistData[category].find(i => i.id === itemId);
+            if (item) {
+                item.checked = !item.checked;
+                saveTripData();
+                renderChecklist();
+                updateProgress();
+            }
+        }
+
+        function toggleCustomItem(index) {
+            customItems[index].checked = !customItems[index].checked;
+            saveTripData();
+            renderChecklist();
+            updateProgress();
+        }
+
+        function addCustomItem() {
+            const input = document.getElementById('new-item');
+            const category = document.getElementById('new-item-category').value;
+            const text = input.value.trim();
+            if (text) {
+                customItems.push({ text: { zh: text, en: text }, category, checked: false });
+                saveTripData();
+                renderChecklist();
+                input.value = '';
+            }
+        }
+
+        function resetChecklist() {
+            if (confirm(t('确定要重置清单吗？', 'Reset checklist?'))) {
+                checklistData = JSON.parse(JSON.stringify(defaultChecklist));
+                customItems = [];
+                saveTripData();
+                renderChecklist();
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            let total = 0, checked = 0;
+            Object.values(checklistData).forEach(items => items.forEach(item => { total++; if (item.checked) checked++; }));
+            customItems.forEach(item => { total++; if (item.checked) checked++; });
+            const percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+            document.getElementById('progress-text').textContent = percent + '%';
+            document.getElementById('progress-fill').style.width = percent + '%';
+        }
+
+        document.querySelectorAll('.category-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.category-tabs .tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                renderChecklist();
+            });
+        });
+
+        // ==================== 页面切换 ====================
+        function switchPage(page) {
+            document.getElementById('page-trips').classList.add('hidden');
+            document.getElementById('page-plan').classList.add('hidden');
+            document.getElementById('page-checklist').classList.add('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('page-' + page).classList.remove('hidden');
+
+            const navMap = { trips: 0, plan: 1, checklist: 2 };
+            document.querySelectorAll('.nav-item')[navMap[page]].classList.add('active');
+
+            if (page === 'trips') renderTripList();
+        }
+
+        // ==================== 重置密码 ====================
+        function showResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        async function confirmResetPassword() {
+            const phone = document.getElementById('reset-phone').value.trim();
+            const newPassword = document.getElementById('reset-password').value;
+
+            if (!phone || newPassword.length < 6) {
+                showToast(t('请填写有效信息', 'Please fill valid info'), 'error');
+                return;
+            }
+
+            try {
+                if (supabase) {
+                    await supabase.auth.updateUser({ password: newPassword });
+                } else {
+                    LocalDB.load();
+                    const user = LocalDB.users.find(u => u.phone === phone);
+                    if (user) {
+                        user.password = newPassword;
+                        LocalDB.save();
+                    }
+                }
+                showToast(t('密码重置成功！', 'Password reset!'), 'success');
+                closeResetModal();
+            } catch (error) {
+                showToast(t('重置失败', 'Reset failed'), 'error');
+            }
+        }
+
+        // ==================== 启动 ====================
+        init();
+    </script>
+</body>
+</html>
