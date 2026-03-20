@@ -67,6 +67,54 @@ const SUPABASE_KEY = 'your-anon-key';
 ### Vercel / Netlify
 直接拖拽项目文件夹到 Vercel 或 Netlify 即可自动部署。
 
+## 开发与发布流程
+
+### 回归测试（发布前必做）
+
+在每次发布代码前，必须运行回归测试验证所有核心功能：
+
+```bash
+# 方式 1：直接运行测试
+node regression-test.js
+
+# 方式 2：运行完整的预发布验证流程
+# Windows
+pre-release.bat
+
+# Linux/Mac
+./pre-release.sh
+```
+
+### 回归测试检查项
+
+| 测试项 | 说明 |
+|--------|------|
+| ✅ 核心文件存在性 | index.html, supabase-init.sql 存在 |
+| ✅ Supabase 配置 | URL 和 Key 正确配置 |
+| ✅ 认证函数 | handleLogin, handleRegister, getUserId 存在 |
+| ✅ 登录错误处理 | 错误提示、解构赋值正确 |
+| ✅ 注册流程验证 | 手机号、密码长度、验证码验证 |
+| ✅ SQL 脚本完整性 | 三张表和触发器都已创建 |
+| ✅ 背景图配置 | 沙滩背景图 URL 正确 |
+| ✅ 中英文支持 | 切换函数和数据属性完整 |
+| ✅ 出行计划管理 | 列表渲染、创建、ID 获取正确 |
+| ✅ 会话验证 | checkAuth 和 getSession 调用正确 |
+
+### 发布步骤
+
+1. **运行回归测试** - 确保所有测试通过
+2. **提交更改** - `git add -A && git commit -m "描述"`
+3. **推送到 GitHub** - `git push`
+4. **验证部署** - 访问 GitHub Pages 检查更新
+
+### 自动化脚本
+
+- `regression-test.js` - 回归测试脚本（10 项自动化测试）
+- `pre-release.bat` - Windows 预发布验证脚本（测试 + 提交 + 推送）
+- `test-report.json` - 测试报告（自动生成）
+
+---
+
 ## 文件说明
 
 | 文件 | 说明 |
