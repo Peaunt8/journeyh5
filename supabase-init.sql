@@ -2,7 +2,17 @@
 -- 轻游迹 TripLite - Supabase 数据库初始化脚本
 -- =========================================
 
--- 1. 创建出行计划表
+-- 1. 创建用户资料表（存储用户账号信息）
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    phone TEXT UNIQUE NOT NULL,
+    nickname TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. 创建出行计划表
 CREATE TABLE IF NOT EXISTS trips (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -14,7 +24,7 @@ CREATE TABLE IF NOT EXISTS trips (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. 创建行程数据表（存储每个出行计划的详细数据）
+-- 3. 创建行程数据表（存储每个出行计划的详细数据）
 CREATE TABLE IF NOT EXISTS trip_data (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
@@ -26,15 +36,26 @@ CREATE TABLE IF NOT EXISTS trip_data (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. 创建索引
+-- 4. 创建索引
+CREATE INDEX IF NOT EXISTS idx_user_profiles_phone ON user_profiles(phone);
 CREATE INDEX IF NOT EXISTS idx_trips_user_id ON trips(user_id);
 CREATE INDEX IF NOT EXISTS idx_trip_data_trip_id ON trip_data(trip_id);
 
--- 4. 设置 Row Level Security (RLS)
+-- 5. 设置 Row Level Security (RLS)
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trip_data ENABLE ROW LEVEL SECURITY;
 
--- 5. 创建 RLS 策略 - 用户只能访问自己的数据
+-- 6. 创建 RLS 策略 - 用户只能访问自己的数据
+CREATE POLICY "Users can view own profile" ON user_profiles
+    FOR SELECT USING (auth.uid() = id OR phone = (auth.jwt() ->> 'phone'));
+
+CREATE POLICY "Users can insert own profile" ON user_profiles
+    FOR INSERT WITH CHECK (auth.uid() = id OR phone = (auth.jwt() ->> 'phone'));
+
+CREATE POLICY "Users can update own profile" ON user_profiles
+    FOR UPDATE USING (auth.uid() = id OR phone = (auth.jwt() ->> 'phone'));
+
 CREATE POLICY "Users can view own trips" ON trips
     FOR SELECT USING (user_id = auth.uid()::TEXT OR user_id = (auth.jwt() ->> 'phone'));
 
@@ -84,7 +105,7 @@ CREATE POLICY "Users can delete trip data" ON trip_data
         )
     );
 
--- 6. 创建自动更新时间戳触发器
+-- 7. 创建自动更新时间戳触发器
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -92,6 +113,11 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_user_profiles_updated_at
+    BEFORE UPDATE ON user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_trips_updated_at
     BEFORE UPDATE ON trips
@@ -102,6 +128,26 @@ CREATE TRIGGER update_trip_data_updated_at
     BEFORE UPDATE ON trip_data
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- 8. 创建用户注册触发器 - 自动在 user_profiles 中创建记录
+CREATE OR REPLACE FUNCTION create_user_profile()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO user_profiles (id, auth_id, phone, nickname)
+    VALUES (
+        NEW.id,
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'phone', NEW.email),
+        COALESCE(NEW.raw_user_meta_data->>'nickname', '')
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION create_user_profile();
 
 -- =========================================
 -- 使用说明：
