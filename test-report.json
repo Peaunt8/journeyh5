@@ -1,0 +1,57 @@
+{
+  "passed": 10,
+  "failed": 0,
+  "warnings": 0,
+  "tests": [
+    {
+      "name": "核心文件存在性检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "Supabase 配置检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "认证函数存在性检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "登录错误处理检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "注册流程验证检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "SQL 脚本完整性检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "背景图配置检查",
+      "passed": true,
+      "message": "背景图 URL 未配置"
+    },
+    {
+      "name": "中英文支持检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "出行计划管理检查",
+      "passed": true,
+      "message": ""
+    },
+    {
+      "name": "会话验证检查",
+      "passed": true,
+      "message": ""
+    }
+  ]
+}
