@@ -2,6 +2,14 @@
 -- 轻游迹 TripLite - Supabase 数据库初始化脚本
 -- =========================================
 
+-- 【重要】删除已存在的表和依赖（CASCADE 自动删除触发器、策略、索引）
+DROP TABLE IF EXISTS trip_data CASCADE;
+DROP TABLE IF EXISTS trips CASCADE;
+DROP TABLE IF EXISTS user_profiles CASCADE;
+
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS create_user_profile() CASCADE;
+
 -- 1. 创建用户资料表（存储用户账号信息）
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
