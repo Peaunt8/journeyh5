@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轻游迹 TripLite - 旅行规划助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-color: #F8F9FA;
+            --primary: #2A9D8F;
+            --primary-dark: #21867a;
+            --primary-light: #3dbdb0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --card-bg: #ffffff;
+            --border-color: #e8e8e8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Microsoft YaHei', sans-serif;
+            background: url('https://images.pexels.com/photos/3225531/pexels-photo-3225531.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            padding: 16px;
+            color: var(--text-primary);
+            position: relative;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(42, 157, 143, 0.1) 0%, rgba(42, 157, 143, 0.15) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        .container { max-width: 480px; margin: 0 auto; }
+        .brand-header { text-align: center; margin-bottom: 20px; padding: 10px 0; }
+        .brand-header h1 { color: var(--primary); font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+        .brand-header .slogan { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .card-title { font-size: 16px; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .card-title .icon { font-size: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; color: var(--text-secondary); font-size: 13px; margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; transition: all 0.2s; background: #fff; color: var(--text-primary); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.1); }
+        .form-group input::placeholder { color: var(--text-muted); }
+        .btn { background: var(--primary); color: #ffffff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.2s; }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-secondary { background: #f0f0f0; color: var(--text-secondary); }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: #ffffff; }
+        .btn-danger { background: var(--danger); }
+        .btn-sm { padding: 6px 12px; font-size: 13px; width: auto; }
+        .user-bar { background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #fff; }
+        .user-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .logout-btn { background: #f5f5f5; border: none; color: var(--text-secondary); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100; }
+        .nav-item { padding: 10px 20px; background: #ffffff; border-radius: 24px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.1); font-size: 13px; font-weight: 600; transition: all 0.2s; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+        .nav-item:hover { transform: translateY(-2px); }
+        .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 16px rgba(42, 157, 143, 0.3); }
+        .page { padding-bottom: 80px; }
+        .hidden { display: none !important; }
+        .trip-list { margin-bottom: 12px; }
+        .trip-item { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: #fafafa; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .trip-item:hover { background: #f5f5f5; }
+        .trip-item.active { border-color: var(--primary); background: #f0fffd; }
+        .trip-item-info { flex: 1; }
+        .trip-item-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .trip-item-date { font-size: 12px; color: var(--text-muted); }
+        .trip-item-actions { display: flex; gap: 6px; }
+        .add-trip-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; background: var(--primary); color: #fff; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s; border: none; width: 100%; }
+        .add-trip-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .destination-info { display: flex; align-items: center; gap: 14px; padding: 16px; background: linear-gradient(135deg, #f0fffd 0%, #e8f8f5 100%); border-radius: 12px; margin-bottom: 16px; }
+        .destination-icon { font-size: 40px; }
+        .destination-details h3 { color: var(--text-primary); font-size: 16px; font-weight: 600; }
+        .destination-details p { color: var(--text-secondary); font-size: 13px; margin-top: 4px; }
+        .day-card { background: #fafafa; border-radius: 10px; padding: 14px; margin-bottom: 12px; border-left: 3px solid var(--primary); }
+        .day-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .day-card-title { color: var(--primary); font-size: 14px; font-weight: 600; }
+        .itinerary-node { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); position: relative; }
+        .itinerary-node-time { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 4px; }
+        .itinerary-node-location { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .itinerary-node-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; max-height: 4.5em; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+        .progress-container { margin-bottom: 16px; }
+        .progress-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: var(--text-secondary); }
+        .progress-bar { height: 8px; background: #e8e8e8; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 4px; transition: width 0.3s; }
+        .category-tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 6px; }
+        .tab { padding: 6px 14px; background: #f0f0f0; border-radius: 16px; font-size: 12px; white-space: nowrap; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); font-weight: 500; border: none; }
+        .tab.active { background: var(--primary); color: #ffffff; }
+        .checklist-item { display: flex; align-items: center; padding: 12px; background: #fafafa; border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
+        .checklist-item:hover { background: #f5f5f5; }
+        .checklist-item.checked { opacity: 0.6; }
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--primary); }
+        .checklist-item.checked span { text-decoration: line-through; color: var(--text-muted); }
+        .checklist-item span { color: var(--text-primary); font-size: 13px; flex: 1; }
+        .category-title { color: var(--primary); font-size: 14px; font-weight: 600; margin: 16px 0 10px; padding-left: 4px; }
+        .empty-state { color: var(--text-muted); text-align: center; padding: 32px 20px; }
+        .empty-state-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+        .add-item-form { display: flex; gap: 8px; margin-top: 14px; }
+        .add-item-form input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; }
+        .add-item-form select { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: #fff; }
+        .add-item-form button { padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 13px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 380px; max-height: 80vh; overflow-y: auto; }
+        .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-primary); color: #fff; padding: 10px 20px; border-radius: 8px; opacity: 0; transition: all 0.3s; z-index: 1001; font-size: 13px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--danger); }
+        .toast.success { background: var(--success); }
+        .lang-switch { position: fixed; top: 16px; right: 16px; background: rgba(255,255,255,0.98); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.1); z-index: 200; transition: all 0.2s; }
+        .lang-switch:hover { transform: scale(1.05); }
+        .lang-icon { font-size: 16px; }
+        .lang-text { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-icon { padding: 4px 8px; background: transparent; border: none; cursor: pointer; font-size: 16px; opacity: 0.5; transition: all 0.2s; }
+        .btn-icon:hover { opacity: 1; }
+        .add-node-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: #f5f5f5; color: var(--text-secondary); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; border: 1px dashed var(--border-color); width: 100%; margin-top: 10px; }
+        .add-node-btn:hover { background: #e8e8e8; border-color: var(--primary); color: var(--primary); }
+        .trip-item-actions button { padding: 4px 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-edit { background: var(--warning); color: #fff; }
+        .btn-delete { background: var(--danger); color: #fff; }
+
+        /* PRD V1.5 - 场景模板按钮样式 */
+        .btn-sm.btn-outline {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .btn-sm.btn-outline:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* PRD V1.5 - 行程时段节点样式 */
+        .period-node {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin-bottom: 8px;
+        }
+        .period-node.empty {
+            border-left-color: var(--border-color);
+            opacity: 0.7;
+        }
+        .period-node .period-label {
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .period-node.empty .period-label {
+            color: var(--text-muted);
+        }
+
+        /* PRD V1.5 - 状态标签样式 */
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* V3.1 - 模板选择卡片样式 */
+        .template-card {
+            flex: 0 0 auto;
+            width: 100px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .template-card:hover {
+            background: #e8e8e8;
+        }
+        .template-card.selected {
+            border-color: var(--primary);
+            background: rgba(42, 157, 143, 0.1);
+        }
+        .template-card .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .template-card .name {
+            font-size: 12px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* V4.0 - 模板库网格样式 */
+        .template-library-card {
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .template-library-card:hover {
+            background: #f5f5f5;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.15);
+        }
+        .template-library-card .icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .template-library-card .name {
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .template-library-card .count {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: block;
+        }
+        .template-library-card .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .template-library-card:hover .delete-btn {
+            opacity: 1;
+        }
+        .template-library-card .delete-btn:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* V4.0 - 模板编辑视图样式 */
+        .template-edit-category {
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .template-edit-category-header {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f0fffd 0%, #e8f8f5 100%);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .template-edit-category-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .template-edit-category-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .template-edit-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #fff;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .template-edit-item:hover {
+            background: #fafafa;
+        }
+        .template-edit-item:last-child {
+            border-bottom: none;
+        }
+        .template-edit-item-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .template-edit-item-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .template-edit-item-actions button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .template-edit-item-actions button:hover {
+            opacity: 1;
+        }
+        .btn-edit-item {
+            background: var(--warning);
+            color: #fff;
+        }
+        .btn-delete-item {
+            background: var(--danger);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-switch" onclick="toggleLanguage()">
+        <span class="lang-icon">🌐</span>
+        <span class="lang-text" id="lang-text">EN</span>
+    </div>
+
+    <div class="container">
+        <div class="brand-header">
+            <h1 data-zh="轻游迹" data-en="TripLite">轻游迹</h1>
+            <p class="slogan" data-zh="让旅行更轻松" data-en="Travel Made Easy">让旅行更轻松</p>
+        </div>
+
+        <!-- 登录注册页面 -->
+        <div id="page-auth" class="fade-in hidden">
+            <div class="card">
+                <div style="text-align: center; padding: 30px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">🗺️</div>
+                    <div style="display: flex; margin-bottom: 20px; background: #f0f0f0; border-radius: 10px; padding: 4px;">
+                        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')" style="flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; transition: all 0.2s; color: var(--text-secondary); font-weight: 500; background: var(--primary); color: #fff;" data-zh="登录" data-en="Login">登录</div>
+                        <div id="tab-register" onclick="switchAuthTab('register')" style="flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; transition: all 0.2s; color: var(--text-secondary); font-weight: 500;" data-zh="注册" data-en="Register">注册</div>
+                    </div>
+                    <div id="auth-error" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; text-align: left;" class="hidden"></div>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                            <input type="tel" id="login-phone" placeholder="请输入手机号">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="密码" data-en="Password">密码</label>
+                            <input type="password" id="login-password" placeholder="请输入密码">
+                        </div>
+                        <button type="button" class="btn" onclick="handleLogin()" data-zh="登 录" data-en="Login">登 录</button>
+                    </form>
+                    <form id="register-form" class="hidden">
+                        <div class="form-group">
+                            <label data-zh="手机号" data-en="Phone Number">手机号</label>
+                            <input type="tel" id="register-phone" placeholder="请输入手机号">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="验证码" data-en="Verification Code">验证码</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="register-code" placeholder="请输入验证码" style="flex: 1;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="sendCode()" data-zh="获取验证码" data-en="Get Code">获取验证码</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="设置密码" data-en="Set Password">设置密码</label>
+                            <input type="password" id="register-password" placeholder="请设置 6 位以上密码">
+                        </div>
+                        <div class="form-group">
+                            <label data-zh="昵称" data-en="Nickname">昵称</label>
+                            <input type="text" id="register-nickname" placeholder="给自己起个好听的名字">
+                        </div>
+                        <button type="button" class="btn" onclick="handleRegister()" data-zh="注 册" data-en="Register">注 册</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主页面 -->
+        <div id="page-main" class="hidden">
+            <div class="user-bar">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">👤</div>
+                    <div class="user-name" id="user-name">游客</div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()" data-zh="退出" data-en="Logout">退出</button>
+            </div>
+
+            <!-- 出行计划列表 -->
+            <div id="page-trips" class="page">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📋</span>
+                        <span data-zh="我的出行计划" data-en="My Trip Plans">我的出行计划</span>
+                    </div>
+                    <div id="trip-list-container" class="trip-list"></div>
+                </div>
+            </div>
+
+            <!-- 行程规划详情 -->
+            <div id="page-plan" class="page hidden">
+                <div class="card">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 id="current-trip-name" style="color: var(--text-primary); font-size: 16px; font-weight: 600;">行程详情</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="backToTripList()" data-zh="返回列表" data-en="Back to List">返回列表</button>
+                    </div>
+                    <div class="destination-info">
+                        <div class="destination-icon" id="dest-icon">📍</div>
+                        <div class="destination-details">
+                            <h3 id="dest-name" data-zh="未设置目的地" data-en="No destination set">未设置目的地</h3>
+                            <p id="dest-dates" data-zh="暂无行程日期" data-en="No dates set">暂无行程日期</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="目的地" data-en="Destination">目的地</label>
+                        <input type="text" id="destination" placeholder="例如：三亚、巴黎、东京">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="出发日期" data-en="Departure Date">出发日期</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    <div class="form-group">
+                        <label data-zh="返回日期" data-en="Return Date">返回日期</label>
+                        <input type="date" id="end-date">
+                    </div>
+                    <button class="btn" onclick="saveTripInfo()" data-zh="保存目的地" data-en="Save Destination">保存目的地</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📅</span>
+                        <span data-zh="行程安排" data-en="Itinerary">行程安排</span>
+                    </div>
+                    <div id="day-cards-container"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">🎒</span>
+                        <span data-zh="旅行出行单" data-en="Travel Checklist">旅行出行单</span>
+                    </div>
+                    <div id="trip-checklist-container"></div>
+                    <div style="margin-top: 14px; padding: 12px; background: #f0fffd; border-radius: 8px;">
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 10px;" data-zh="选择旅行类型，快速生成打包清单" data-en="Select trip type to quickly generate packing list">📦 选择旅行类型，快速生成打包清单</p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-sm btn-outline" onclick="applyPackingTemplate('city')" style="flex: 1; min-width: 80px;">🏙️<br><span data-zh="城市旅行" data-en="City">城市旅行</span></button>
+                            <button class="btn btn-sm btn-outline" onclick="applyPackingTemplate('beach')" style="flex: 1; min-width: 80px;">🏖️<br><span data-zh="海岛度假" data-en="Beach">海岛度假</span></button>
+                            <button class="btn btn-sm btn-outline" onclick="applyPackingTemplate('winter')" style="flex: 1; min-width: 80px;">❄️<br><span data-zh="冬季旅行" data-en="Winter">冬季旅行</span></button>
+                            <button class="btn btn-sm btn-outline" onclick="applyPackingTemplate('overseas')" style="flex: 1; min-width: 80px;">✈️<br><span data-zh="出国旅行" data-en="Overseas">出国旅行</span></button>
+                            <button class="btn btn-sm btn-outline" onclick="applyPackingTemplate('family')" style="flex: 1; min-width: 80px;">👨‍👩‍👧<br><span data-zh="亲子旅行" data-en="Family">亲子旅行</span></button>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" onclick="goToChecklistPage()" style="margin-top: 12px;" data-zh="编辑打包清单" data-en="Edit Packing Checklist">编辑打包清单</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon">📝</span>
+                        <span data-zh="备注事项" data-en="Notes">备注事项</span>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="notes" rows="4" placeholder="记录重要事项，如航班号、酒店地址、紧急联系人等"></textarea>
+                    </div>
+                    <button class="btn" onclick="saveTripNotes()" data-zh="保存备注" data-en="Save Notes">保存备注</button>
+                </div>
+            </div>
+
+            <!-- 打包清单 (V4.0: 全局清单库) -->
+            <div id="page-checklist" class="page hidden">
+                <!-- V4.0: 第一级 - 模板库视图 -->
+                <div id="checklist-library-view" class="card">
+                    <div class="card-title">
+                        <span class="icon">🎒</span>
+                        <span data-zh="打包清单模板库" data-en="Packing Template Library">打包清单模板库</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;" data-zh="选择一个模板类型进行编辑，这里定义的清单将用于所有相关行程" data-en="Select a template type to edit. Templates defined here will be used for all related trips.">选择一个模板类型进行编辑，这里定义的清单将用于所有相关行程</p>
+
+                    <!-- 系统预设模板 -->
+                    <div class="form-group">
+                        <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px; display: block;" data-zh="系统预设模板" data-en="System Templates">系统预设模板</label>
+                        <div id="system-templates-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;"></div>
+                    </div>
+
+                    <!-- 用户自定义模板 -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="font-size: 12px; color: var(--text-muted); display: block;" data-zh="我的自定义模板" data-en="My Custom Templates">我的自定义模板</label>
+                            <button class="btn btn-outline btn-sm" onclick="showCreateTemplateModal()" style="width: auto; padding: 4px 12px; font-size: 12px;" data-zh="+ 新建模板" data-en="+ New Template">+ 新建模板</button>
+                        </div>
+                        <div id="user-templates-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+                    </div>
+                </div>
+
+                <!-- V4.0: 第二级 - 模板编辑视图 -->
+                <div id="checklist-edit-view" class="card hidden">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <button class="btn btn-secondary btn-sm" onclick="backToTemplateLibrary()" style="width: auto; padding: 6px 12px;" data-zh="← 返回模板库" data-en="← Back to Library">← 返回模板库</button>
+                        <h3 id="editing-template-name" style="color: var(--text-primary); font-size: 16px; font-weight: 600;"></h3>
+                        <button class="btn btn-sm" onclick="saveTemplateChanges()" style="width: auto; padding: 6px 12px;" data-zh="保存修改" data-en="Save Changes">保存修改</button>
+                    </div>
+
+                    <div id="template-edit-container"></div>
+
+                    <!-- 批量添加物品 -->
+                    <div class="add-item-form" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                        <input type="text" id="new-template-item" placeholder="输入物品名称，回车添加" style="flex: 1;">
+                        <select id="new-template-item-category" style="width: 120px;">
+                            <option value="documents" data-zh="证件" data-en="Documents">证件</option>
+                            <option value="clothes" data-zh="衣物" data-en="Clothes">衣物</option>
+                            <option value="electronics" data-zh="电子" data-en="Electronics">电子</option>
+                            <option value="toiletries" data-zh="洗漱" data-en="Toiletries">洗漱</option>
+                            <option value="medicine" data-zh="药品" data-en="Medicine">药品</option>
+                            <option value="other" data-zh="其他" data-en="Other">其他</option>
+                        </select>
+                        <button onclick="addTemplateItem()" data-zh="添加" data-en="Add">添加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav hidden" id="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('trips')">
+            <span>📋</span>
+            <span data-zh="出行计划" data-en="Trips">出行计划</span>
+        </div>
+        <div class="nav-item" onclick="switchPage('checklist')" id="nav-checklist">
+            <span>🎒</span>
+            <span data-zh="打包清单" data-en="Checklist">打包清单</span>
+        </div>
+    </div>
+
+    <!-- 新建/编辑出行计划弹窗 -->
+    <div id="trip-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" id="modal-title" data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</h3>
+            <div class="form-group">
+                <label data-zh="计划名称" data-en="Plan Name">计划名称</label>
+                <input type="text" id="trip-name-input" placeholder="例如：2024 日本之旅">
+            </div>
+            <div class="form-group">
+                <label data-zh="打包清单模板" data-en="Packing List Template">打包清单模板</label>
+                <div id="template-selector" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+                    <!-- 模板卡片由 JS 生成 -->
+                </div>
+                <input type="hidden" id="selected-template" value="">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn" onclick="confirmCreateTrip()" data-zh="创建" data-en="Create">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加行程节点弹窗 -->
+    <div id="node-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" id="node-modal-title" data-zh="添加行程" data-en="Add Itinerary">添加行程</h3>
+            <div class="form-group">
+                <label data-zh="时间" data-en="Time">时间</label>
+                <input type="time" id="node-time" value="09:00">
+            </div>
+            <div class="form-group">
+                <label data-zh="地点" data-en="Location">地点</label>
+                <input type="text" id="node-location" placeholder="必填">
+            </div>
+            <div class="form-group">
+                <label data-zh="备注" data-en="Note">备注</label>
+                <textarea id="node-note" rows="2" placeholder="可选"></textarea>
+            </div>
+            <input type="hidden" id="current-day-index">
+            <input type="hidden" id="edit-node-index">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeNodeModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn" id="node-modal-confirm-btn" onclick="confirmAddNode()" data-zh="添加" data-en="Add">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- V3.1 - 保存为模板弹窗 -->
+    <div id="save-template-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" data-zh="保存为我的模板" data-en="Save as My Template">保存为我的模板</h3>
+            <div class="form-group">
+                <label data-zh="模板名称" data-en="Template Name">模板名称</label>
+                <input type="text" id="template-name-input" placeholder="例如：我的日本购物清单">
+            </div>
+            <div class="form-group">
+                <label data-zh="模板图标" data-en="Template Icon">模板图标</label>
+                <select id="template-icon-select" style="width: 100%; padding: 12px; font-size: 16px;">
+                    <option value="📋">📋 清单</option>
+                    <option value="🛍️">🛍️ 购物</option>
+                    <option value="🎒">🎒 背包</option>
+                    <option value="🧳">🧳 行李箱</option>
+                    <option value="✈️">✈️ 飞机</option>
+                    <option value="🏖️">🏖️ 海滩</option>
+                    <option value="🏔️">🏔️ 山地</option>
+                    <option value="🏙️">🏙️ 城市</option>
+                    <option value="🎿">🎿 滑雪</option>
+                    <option value="🍜">🍜 美食</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeSaveTemplateModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn" onclick="confirmSaveTemplate()" data-zh="保存" data-en="Save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- V3.1 - 重置清单确认弹窗 -->
+    <div id="reset-confirm-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 class="modal-title" data-zh="确认重置" data-en="Confirm Reset">确认重置</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;" data-zh="此操作将清空当前打包清单中的所有物品，且不可恢复。确定要继续吗？" data-en="This will clear all items in your packing list and cannot be undone. Are you sure?">此操作将清空当前打包清单中的所有物品，且不可恢复。确定要继续吗？</p>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button class="btn btn-secondary" onclick="closeResetConfirmModal()" data-zh="取消" data-en="Cancel">取消</button>
+                <button class="btn btn-danger" onclick="confirmResetPackingList()" data-zh="确认重置" data-en="Confirm Reset">确认重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ==================== 全局函数 ====================
+        window.switchAuthTab = function(type) {
+            const loginTab = document.getElementById('tab-login');
+            const registerTab = document.getElementById('tab-register');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (type === 'login') {
+                loginTab.style.background = 'var(--primary)';
+                loginTab.style.color = '#fff';
+                registerTab.style.background = '';
+                registerTab.style.color = '';
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.style.background = 'var(--primary)';
+                registerTab.style.color = '#fff';
+                loginTab.style.background = '';
+                loginTab.style.color = '';
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            }
+            document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        window.sendCode = function() {
+            const phone = document.getElementById('register-phone').value;
+            if (!phone || phone.length < 11) {
+                showToast('请输入有效的手机号', 'error');
+                return;
+            }
+            showToast('验证码已发送：123456', 'success');
+        };
+
+        // ==================== 本地数据库 ====================
+        const LocalDB = {
+            users: [],
+            trips: [],
+            tripData: {},
+            globalTemplates: {}, // V4.0: 全局清单模板库
+
+            save() {
+                localStorage.setItem('tripLite_localDB', JSON.stringify({
+                    users: this.users,
+                    trips: this.trips,
+                    tripData: this.tripData,
+                    globalTemplates: this.globalTemplates
+                }));
+            },
+
+            load() {
+                // V4.0.1: 数据迁移 - 兼容旧版本 localStorage 键名
+                // 优先使用新版本键名，如果没有则尝试旧版本键名
+                const newSaved = localStorage.getItem('tripLite_localDB');
+                if (newSaved) {
+                    const data = JSON.parse(newSaved);
+                    this.users = data.users || [];
+                    this.trips = data.trips || [];
+                    this.tripData = data.tripData || {};
+                    this.globalTemplates = data.globalTemplates || {};
+                    return;
+                }
+
+                // 尝试旧版本键名 - users
+                const oldUsers = localStorage.getItem('tripLite_users');
+                if (oldUsers) {
+                    this.users = JSON.parse(oldUsers);
+                }
+
+                // 尝试旧版本键名 - trips
+                const oldTrips = localStorage.getItem('tripLite_trips');
+                if (oldTrips) {
+                    this.trips = JSON.parse(oldTrips);
+                }
+
+                // 尝试旧版本键名 - tripData
+                const oldTripData = localStorage.getItem('tripLite_tripData');
+                if (oldTripData) {
+                    this.tripData = JSON.parse(oldTripData);
+                }
+
+                // 如果从旧版本迁移了数据，保存为新格式
+                if (oldUsers || oldTrips || oldTripData) {
+                    this.save();
+                    // 清理旧键名
+                    localStorage.removeItem('tripLite_users');
+                    localStorage.removeItem('tripLite_trips');
+                    localStorage.removeItem('tripLite_tripData');
+                }
+            },
+
+            signUp(phone, password, nickname) {
+                this.load();
+                if (this.users.find(u => u.phone === phone)) {
+                    throw new Error('该手机号已注册');
+                }
+                const user = { phone, password, nickname, createdAt: new Date().toISOString() };
+                this.users.push(user);
+                this.save();
+                return { user, session: { user } };
+            },
+
+            signIn(phone, password) {
+                this.load();
+                const user = this.users.find(u => u.phone === phone && u.password === password);
+                if (!user) {
+                    throw new Error('手机号或密码错误');
+                }
+                return { user, session: { user } };
+            },
+
+            // V4.0: 全局模板管理方法
+            saveTemplate(templateId, template) {
+                this.load();
+                this.globalTemplates[templateId] = template;
+                this.save();
+            },
+
+            getTemplate(templateId) {
+                this.load();
+                return this.globalTemplates[templateId];
+            },
+
+            getAllTemplates() {
+                this.load();
+                return this.globalTemplates;
+            },
+
+            deleteTemplate(templateId) {
+                this.load();
+                delete this.globalTemplates[templateId];
+                this.save();
+            }
+        };
+
+        // ==================== 全局状态 ====================
+        let currentLang = 'zh';
+        let currentUser = null;
+        let currentTrip = null;
+        let currentCategory = 'all';
+        let editingTripId = null;
+        let currentDayIndex = 0;
+        let expandedCategory = 'documents'; // 默认展开证件模块
+        let currentTemplateMode = 'view'; // V4.0: 'view' 查看模板库，'edit' 编辑模板中
+        let editingTemplateKey = null; // V4.0: 当前编辑的模板 key
+
+        // PRD V1.5 数据结构 - 增强版 Trip 对象
+        let tripData = {
+            planId: '',
+            title: '',
+            status: 'not_started', // not_started, in_progress, completed, incomplete
+            dates: { start: '', end: '', totalDays: 0 },
+            itinerary: [],
+            packingList: [],
+            itineraryCompletion: 0, // 0-100
+            packingCompletion: 0, // 0-100
+            updatedAt: ''
+        };
+
+        // PRD V1.5 场景化打包模板
+        const packingTemplates = {
+            city: {
+                name: { zh: '城市旅行', en: 'City Trip' },
+                icon: '🏙️',
+                items: [
+                    { category: 'documents', items: [
+                        { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                        { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                        { id: 'd3', name: { zh: '酒店预订单', en: 'Hotel Reservation' }, isPacked: false },
+                        { id: 'd4', name: { zh: '银行卡/现金', en: 'Card / Cash' }, isPacked: false }
+                    ]},
+                    { category: 'clothes', items: [
+                        { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                        { id: 'c2', name: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, isPacked: false },
+                        { id: 'c3', name: { zh: '裤子/裙子', en: 'Pants / Skirts' }, isPacked: false },
+                        { id: 'c6', name: { zh: '运动鞋/休闲鞋', en: 'Sneakers' }, isPacked: false },
+                        { id: 'c9', name: { zh: '防晒衣/防晒袖套', en: 'Sun Protection Clothing' }, isPacked: false }
+                    ]},
+                    { category: 'electronics', items: [
+                        { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                        { id: 'e2', name: { zh: '充电宝', en: 'Power Bank' }, isPacked: false },
+                        { id: 'e3', name: { zh: '耳机', en: 'Headphones' }, isPacked: false },
+                        { id: 'e4', name: { zh: '相机/摄像机', en: 'Camera / Camcorder' }, isPacked: false }
+                    ]},
+                    { category: 'toiletries', items: [
+                        { id: 't1', name: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, isPacked: false },
+                        { id: 't4', name: { zh: '护肤品', en: 'Skincare' }, isPacked: false },
+                        { id: 't5', name: { zh: '防晒霜', en: 'Sunscreen' }, isPacked: false },
+                        { id: 't9', name: { zh: '纸巾/湿巾', en: 'Tissues / Wet Wipes' }, isPacked: false }
+                    ]},
+                    { category: 'medicine', items: [
+                        { id: 'm1', name: { zh: '感冒药', en: 'Cold Medicine' }, isPacked: false },
+                        { id: 'm2', name: { zh: '肠胃药', en: 'Stomach Medicine' }, isPacked: false },
+                        { id: 'm3', name: { zh: '创可贴', en: 'Band-aids' }, isPacked: false }
+                    ]},
+                    { category: 'other', items: [
+                        { id: 'o1', name: { zh: '雨伞/雨衣', en: 'Umbrella / Raincoat' }, isPacked: false },
+                        { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                        { id: 'o3', name: { zh: '背包/手提袋', en: 'Backpack / Tote Bag' }, isPacked: false }
+                    ]}
+                ]
+            },
+            beach: {
+                name: { zh: '海岛度假', en: 'Beach Resort' },
+                icon: '🏖️',
+                items: [
+                    { category: 'documents', items: [
+                        { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                        { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                        { id: 'd3', name: { zh: '酒店预订单', en: 'Hotel Reservation' }, isPacked: false }
+                    ]},
+                    { category: 'clothes', items: [
+                        { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                        { id: 'c2', name: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, isPacked: false },
+                        { id: 'c7', name: { zh: '拖鞋', en: 'Slippers' }, isPacked: false },
+                        { id: 'c8', name: { zh: '帽子/围巾', en: 'Hat / Scarf' }, isPacked: false },
+                        { id: 'c9', name: { zh: '防晒衣/防晒袖套', en: 'Sun Protection Clothing' }, isPacked: false },
+                        { id: 'c10', name: { zh: '泳衣/泳裤', en: 'Swimsuit' }, isPacked: false }
+                    ]},
+                    { category: 'electronics', items: [
+                        { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                        { id: 'e4', name: { zh: '相机/摄像机', en: 'Camera / Camcorder' }, isPacked: false },
+                        { id: 'e7', name: { zh: '自拍杆/三脚架', en: 'Selfie Stick / Tripod' }, isPacked: false }
+                    ]},
+                    { category: 'toiletries', items: [
+                        { id: 't2', name: { zh: '洗发水/沐浴露', en: 'Shampoo / Body Wash' }, isPacked: false },
+                        { id: 't3', name: { zh: '毛巾/浴巾', en: 'Towel / Bath Towel' }, isPacked: false },
+                        { id: 't4', name: { zh: '护肤品', en: 'Skincare' }, isPacked: false },
+                        { id: 't5', name: { zh: '防晒霜', en: 'Sunscreen' }, isPacked: false }
+                    ]},
+                    { category: 'medicine', items: [
+                        { id: 'm3', name: { zh: '创可贴', en: 'Band-aids' }, isPacked: false },
+                        { id: 'm8', name: { zh: '驱蚊液/止痒膏', en: 'Mosquito Repellent / Anti-itch Cream' }, isPacked: false }
+                    ]},
+                    { category: 'other', items: [
+                        { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                        { id: 'o4', name: { zh: '旅行枕/眼罩', en: 'Travel Pillow / Eye Mask' }, isPacked: false },
+                        { id: 'o6', name: { zh: '零食/干粮', en: 'Snacks' }, isPacked: false }
+                    ]}
+                ]
+            },
+            winter: {
+                name: { zh: '冬季旅行', en: 'Winter Trip' },
+                icon: '❄️',
+                items: [
+                    { category: 'documents', items: [
+                        { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                        { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                        { id: 'd6', name: { zh: '旅行保险单', en: 'Travel Insurance' }, isPacked: false }
+                    ]},
+                    { category: 'clothes', items: [
+                        { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                        { id: 'c4', name: { zh: '外套', en: 'Jacket / Coat' }, isPacked: false },
+                        { id: 'c5', name: { zh: '睡衣', en: 'Pajamas' }, isPacked: false },
+                        { id: 'c8', name: { zh: '帽子/围巾', en: 'Hat / Scarf' }, isPacked: false }
+                    ]},
+                    { category: 'electronics', items: [
+                        { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                        { id: 'e2', name: { zh: '充电宝', en: 'Power Bank' }, isPacked: false }
+                    ]},
+                    { category: 'toiletries', items: [
+                        { id: 't4', name: { zh: '护肤品', en: 'Skincare' }, isPacked: false },
+                        { id: 't5', name: { zh: '防晒霜', en: 'Sunscreen' }, isPacked: false },
+                        { id: 't10', name: { zh: '洗衣液/肥皂片', en: 'Laundry Detergent / Soap Sheets' }, isPacked: false }
+                    ]},
+                    { category: 'medicine', items: [
+                        { id: 'm1', name: { zh: '感冒药', en: 'Cold Medicine' }, isPacked: false },
+                        { id: 'm5', name: { zh: '止痛药', en: 'Painkillers' }, isPacked: false },
+                        { id: 'm6', name: { zh: '抗过敏药', en: 'Antihistamines' }, isPacked: false }
+                    ]},
+                    { category: 'other', items: [
+                        { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                        { id: 'o4', name: { zh: '旅行枕/眼罩', en: 'Travel Pillow / Eye Mask' }, isPacked: false }
+                    ]}
+                ]
+            },
+            overseas: {
+                name: { zh: '出国旅行', en: 'Overseas Trip' },
+                icon: '✈️',
+                items: [
+                    { category: 'documents', items: [
+                        { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                        { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                        { id: 'd3', name: { zh: '酒店预订单', en: 'Hotel Reservation' }, isPacked: false },
+                        { id: 'd4', name: { zh: '银行卡/现金', en: 'Card / Cash' }, isPacked: false },
+                        { id: 'd5', name: { zh: '签证文件', en: 'Visa Documents' }, isPacked: false },
+                        { id: 'd6', name: { zh: '旅行保险单', en: 'Travel Insurance' }, isPacked: false },
+                        { id: 'd7', name: { zh: '紧急联系人列表', en: 'Emergency Contacts' }, isPacked: false }
+                    ]},
+                    { category: 'clothes', items: [
+                        { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                        { id: 'c2', name: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, isPacked: false },
+                        { id: 'c3', name: { zh: '裤子/裙子', en: 'Pants / Skirts' }, isPacked: false },
+                        { id: 'c4', name: { zh: '外套', en: 'Jacket / Coat' }, isPacked: false },
+                        { id: 'c6', name: { zh: '运动鞋/休闲鞋', en: 'Sneakers' }, isPacked: false }
+                    ]},
+                    { category: 'electronics', items: [
+                        { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                        { id: 'e2', name: { zh: '充电宝', en: 'Power Bank' }, isPacked: false },
+                        { id: 'e4', name: { zh: '相机/摄像机', en: 'Camera / Camcorder' }, isPacked: false },
+                        { id: 'e5', name: { zh: '转换插头', en: 'Adapter' }, isPacked: false }
+                    ]},
+                    { category: 'toiletries', items: [
+                        { id: 't1', name: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, isPacked: false },
+                        { id: 't4', name: { zh: '护肤品', en: 'Skincare' }, isPacked: false },
+                        { id: 't5', name: { zh: '防晒霜', en: 'Sunscreen' }, isPacked: false },
+                        { id: 't9', name: { zh: '纸巾/湿巾', en: 'Tissues / Wet Wipes' }, isPacked: false }
+                    ]},
+                    { category: 'medicine', items: [
+                        { id: 'm1', name: { zh: '感冒药', en: 'Cold Medicine' }, isPacked: false },
+                        { id: 'm2', name: { zh: '肠胃药', en: 'Stomach Medicine' }, isPacked: false },
+                        { id: 'm3', name: { zh: '创可贴', en: 'Band-aids' }, isPacked: false },
+                        { id: 'm9', name: { zh: '个人常用药', en: 'Personal Prescription Meds' }, isPacked: false }
+                    ]},
+                    { category: 'other', items: [
+                        { id: 'o1', name: { zh: '雨伞/雨衣', en: 'Umbrella / Raincoat' }, isPacked: false },
+                        { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                        { id: 'o5', name: { zh: '口罩/消毒洗手液', en: 'Masks / Hand Sanitizer' }, isPacked: false }
+                    ]}
+                ]
+            },
+            family: {
+                name: { zh: '亲子旅行', en: 'Family Trip' },
+                icon: '👨‍👩‍👧',
+                items: [
+                    { category: 'documents', items: [
+                        { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                        { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                        { id: 'd3', name: { zh: '酒店预订单', en: 'Hotel Reservation' }, isPacked: false },
+                        { id: 'd7', name: { zh: '紧急联系人列表', en: 'Emergency Contacts' }, isPacked: false }
+                    ]},
+                    { category: 'clothes', items: [
+                        { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                        { id: 'c2', name: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, isPacked: false },
+                        { id: 'c5', name: { zh: '睡衣', en: 'Pajamas' }, isPacked: false },
+                        { id: 'c7', name: { zh: '拖鞋', en: 'Slippers' }, isPacked: false },
+                        { id: 'c9', name: { zh: '防晒衣/防晒袖套', en: 'Sun Protection Clothing' }, isPacked: false }
+                    ]},
+                    { category: 'electronics', items: [
+                        { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                        { id: 'e2', name: { zh: '充电宝', en: 'Power Bank' }, isPacked: false },
+                        { id: 'e4', name: { zh: '相机/摄像机', en: 'Camera / Camcorder' }, isPacked: false }
+                    ]},
+                    { category: 'toiletries', items: [
+                        { id: 't1', name: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, isPacked: false },
+                        { id: 't2', name: { zh: '洗发水/沐浴露', en: 'Shampoo / Body Wash' }, isPacked: false },
+                        { id: 't3', name: { zh: '毛巾/浴巾', en: 'Towel / Bath Towel' }, isPacked: false },
+                        { id: 't8', name: { zh: '指甲刀/棉签', en: 'Nail Clippers / Cotton Swabs' }, isPacked: false },
+                        { id: 't9', name: { zh: '纸巾/湿巾', en: 'Tissues / Wet Wipes' }, isPacked: false }
+                    ]},
+                    { category: 'medicine', items: [
+                        { id: 'm1', name: { zh: '感冒药', en: 'Cold Medicine' }, isPacked: false },
+                        { id: 'm2', name: { zh: '肠胃药', en: 'Stomach Medicine' }, isPacked: false },
+                        { id: 'm3', name: { zh: '创可贴', en: 'Band-aids' }, isPacked: false },
+                        { id: 'm8', name: { zh: '驱蚊液/止痒膏', en: 'Mosquito Repellent / Anti-itch Cream' }, isPacked: false }
+                    ]},
+                    { category: 'other', items: [
+                        { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                        { id: 'o4', name: { zh: '旅行枕/眼罩', en: 'Travel Pillow / Eye Mask' }, isPacked: false },
+                        { id: 'o6', name: { zh: '零食/干粮', en: 'Snacks' }, isPacked: false },
+                        { id: 'o7', name: { zh: 'book/Kindle', en: 'Book / E-reader' }, isPacked: false }
+                    ]}
+                ]
+            }
+        };
+
+        // 状态标签配置
+        const statusConfig = {
+            not_started: { label: { zh: '未开始', en: 'Not Started' }, color: '#999999', bg: '#f5f5f5' },
+            in_progress: { label: { zh: '进行中', en: 'In Progress' }, color: '#ffffff', bg: '#2A9D8F' },
+            completed: { label: { zh: '已结束', en: 'Completed' }, color: '#ffffff', bg: '#10b981' },
+            incomplete: { label: { zh: '未完善', en: 'Incomplete' }, color: '#ffffff', bg: '#f59e0b' }
+        };
+
+        // 默认打包清单分类（常用的旅行物件）
+        const defaultPackingList = [
+            { category: 'documents', items: [
+                { id: 'd1', name: { zh: '身份证/护照', en: 'ID / Passport' }, isPacked: false },
+                { id: 'd2', name: { zh: '机票/车票', en: 'Tickets' }, isPacked: false },
+                { id: 'd3', name: { zh: '酒店预订单', en: 'Hotel Reservation' }, isPacked: false },
+                { id: 'd4', name: { zh: '银行卡/现金', en: 'Card / Cash' }, isPacked: false },
+                { id: 'd5', name: { zh: '签证文件', en: 'Visa Documents' }, isPacked: false },
+                { id: 'd6', name: { zh: '旅行保险单', en: 'Travel Insurance' }, isPacked: false },
+                { id: 'd7', name: { zh: '紧急联系人列表', en: 'Emergency Contacts' }, isPacked: false },
+                { id: 'd8', name: { zh: '驾照/学生证', en: 'Driver License / Student ID' }, isPacked: false }
+            ]},
+            { category: 'clothes', items: [
+                { id: 'c1', name: { zh: '换洗衣物（内衣/袜子）', en: 'Underwear / Socks' }, isPacked: false },
+                { id: 'c2', name: { zh: 'T 恤/衬衫', en: 'T-shirts / Shirts' }, isPacked: false },
+                { id: 'c3', name: { zh: '裤子/裙子', en: 'Pants / Skirts' }, isPacked: false },
+                { id: 'c4', name: { zh: '外套', en: 'Jacket / Coat' }, isPacked: false },
+                { id: 'c5', name: { zh: '睡衣', en: 'Pajamas' }, isPacked: false },
+                { id: 'c6', name: { zh: '运动鞋/休闲鞋', en: 'Sneakers' }, isPacked: false },
+                { id: 'c7', name: { zh: '拖鞋', en: 'Slippers' }, isPacked: false },
+                { id: 'c8', name: { zh: '帽子/围巾', en: 'Hat / Scarf' }, isPacked: false },
+                { id: 'c9', name: { zh: '防晒霜衣/防晒袖套', en: 'Sun Protection Clothing' }, isPacked: false },
+                { id: 'c10', name: { zh: '泳衣/泳裤', en: 'Swimsuit' }, isPacked: false },
+                { id: 'c11', name: { zh: '皮带/领带', en: 'Belt / Tie' }, isPacked: false },
+                { id: 'c12', name: { zh: '首饰/手表', en: 'Jewelry / Watch' }, isPacked: false }
+            ]},
+            { category: 'electronics', items: [
+                { id: 'e1', name: { zh: '手机/充电器', en: 'Phone / Charger' }, isPacked: false },
+                { id: 'e2', name: { zh: '充电宝', en: 'Power Bank' }, isPacked: false },
+                { id: 'e3', name: { zh: '耳机', en: 'Headphones' }, isPacked: false },
+                { id: 'e4', name: { zh: '相机/摄像机', en: 'Camera / Camcorder' }, isPacked: false },
+                { id: 'e5', name: { zh: '转换插头', en: 'Adapter' }, isPacked: false },
+                { id: 'e6', name: { zh: '笔记本电脑/平板', en: 'Laptop / Tablet' }, isPacked: false },
+                { id: 'e7', name: { zh: '自拍杆/三脚架', en: 'Selfie Stick / Tripod' }, isPacked: false },
+                { id: 'e8', name: { zh: '存储卡/读卡器', en: 'Memory Card / Card Reader' }, isPacked: false }
+            ]},
+            { category: 'toiletries', items: [
+                { id: 't1', name: { zh: '牙刷/牙膏', en: 'Toothbrush / Toothpaste' }, isPacked: false },
+                { id: 't2', name: { zh: '洗发水/沐浴露', en: 'Shampoo / Body Wash' }, isPacked: false },
+                { id: 't3', name: { zh: '毛巾/浴巾', en: 'Towel / Bath Towel' }, isPacked: false },
+                { id: 't4', name: { zh: '护肤品', en: 'Skincare' }, isPacked: false },
+                { id: 't5', name: { zh: '防晒霜', en: 'Sunscreen' }, isPacked: false },
+                { id: 't6', name: { zh: '剃须刀/剃须泡沫', en: 'Razor / Shaving Foam' }, isPacked: false },
+                { id: 't7', name: { zh: '梳子/镜子', en: 'Comb / Mirror' }, isPacked: false },
+                { id: 't8', name: { zh: '指甲刀/棉签', en: 'Nail Clippers / Cotton Swabs' }, isPacked: false },
+                { id: 't9', name: { zh: '纸巾/湿巾', en: 'Tissues / Wet Wipes' }, isPacked: false },
+                { id: 't10', name: { zh: '洗衣液/肥皂片', en: 'Laundry Detergent / Soap Sheets' }, isPacked: false }
+            ]},
+            { category: 'medicine', items: [
+                { id: 'm1', name: { zh: '感冒药', en: 'Cold Medicine' }, isPacked: false },
+                { id: 'm2', name: { zh: '肠胃药', en: 'Stomach Medicine' }, isPacked: false },
+                { id: 'm3', name: { zh: '创可贴', en: 'Band-aids' }, isPacked: false },
+                { id: 'm4', name: { zh: '晕车药', en: 'Motion Sickness Pills' }, isPacked: false },
+                { id: 'm5', name: { zh: '止痛药', en: 'Painkillers' }, isPacked: false },
+                { id: 'm6', name: { zh: '抗过敏药', en: 'Antihistamines' }, isPacked: false },
+                { id: 'm7', name: { zh: '消炎药', en: 'Anti-inflammatory' }, isPacked: false },
+                { id: 'm8', name: { zh: '驱蚊液/止痒膏', en: 'Mosquito Repellent / Anti-itch Cream' }, isPacked: false },
+                { id: 'm9', name: { zh: '个人常用药', en: 'Personal Prescription Meds' }, isPacked: false }
+            ]},
+            { category: 'other', items: [
+                { id: 'o1', name: { zh: '雨伞/雨衣', en: 'Umbrella / Raincoat' }, isPacked: false },
+                { id: 'o2', name: { zh: '水杯/保温杯', en: 'Water Bottle / Thermos' }, isPacked: false },
+                { id: 'o3', name: { zh: '背包/手提袋', en: 'Backpack / Tote Bag' }, isPacked: false },
+                { id: 'o4', name: { zh: '旅行枕/眼罩', en: 'Travel Pillow / Eye Mask' }, isPacked: false },
+                { id: 'o5', name: { zh: '口罩/消毒洗手液', en: 'Masks / Hand Sanitizer' }, isPacked: false },
+                { id: 'o6', name: { zh: '零食/干粮', en: 'Snacks' }, isPacked: false },
+                { id: 'o7', name: { zh: ' book/Kindle', en: 'Book / E-reader' }, isPacked: false },
+                { id: 'o8', name: { zh: '行李箱/锁', en: 'Luggage / Lock' }, isPacked: false }
+            ]}
+        ];
+
+        // ==================== 工具函数 ====================
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function t(zh, en) { return currentLang === 'zh' ? zh : en; }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            setTimeout(() => errorEl.classList.add('hidden'), 5000);
+        }
+
+        // ==================== 语言切换 ====================
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('tripLite_lang', currentLang);
+            updateLangButton();
+            updatePageLanguage();
+        }
+
+        function updateLangButton() {
+            document.getElementById('lang-text').textContent = currentLang === 'zh' ? 'EN' : '中文';
+        }
+
+        function updatePageLanguage() {
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+            document.querySelectorAll('[data-zh]').forEach(el => {
+                el.textContent = currentLang === 'zh' ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+            });
+            renderTripList();
+            renderDayCards();
+            renderTripChecklist();
+        }
+
+        // ==================== 认证相关 ====================
+        function init() {
+            LocalDB.load();
+            currentLang = localStorage.getItem('tripLite_lang') || 'zh';
+            updateLangButton();
+            checkAuth();
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('tripLite_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showMainPage();
+                } catch (e) {
+                    showAuthPage();
+                }
+            } else {
+                showAuthPage();
+            }
+        }
+
+        function showAuthPage() {
+            document.getElementById('page-auth').classList.remove('hidden');
+            document.getElementById('page-main').classList.add('hidden');
+            document.getElementById('bottom-nav').classList.add('hidden');
+        }
+
+        function showMainPage() {
+            document.getElementById('page-auth').classList.add('hidden');
+            document.getElementById('page-main').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+
+            if (currentUser) {
+                document.getElementById('user-name').textContent = currentUser.nickname || t('旅行者', 'Traveler');
+                document.getElementById('user-avatar').textContent = currentUser.nickname ? currentUser.nickname[0] : '👤';
+            }
+
+            // 初始化 tripData 为默认打包清单（当没有选择行程时）
+            if (!currentTrip) {
+                tripData = {
+                    planId: '',
+                    title: '',
+                    dates: { start: '', end: '', totalDays: 0 },
+                    itinerary: [],
+                    packingList: JSON.parse(JSON.stringify(defaultPackingList)),
+                    notes: ''
+                };
+            }
+
+            renderTripList();
+        }
+
+        function handleLogin() {
+            const phone = document.getElementById('login-phone').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!phone || !password) {
+                showError(t('请输入手机号和密码', 'Please enter phone and password'));
+                return;
+            }
+
+            try {
+                const result = LocalDB.signIn(phone, password);
+                currentUser = result.user;
+                localStorage.setItem('tripLite_user', JSON.stringify(currentUser));
+                showToast(t('登录成功！', 'Login successful!'), 'success');
+                showMainPage();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function handleRegister() {
+            const phone = document.getElementById('register-phone').value.trim();
+            const code = document.getElementById('register-code').value;
+            const password = document.getElementById('register-password').value;
+            const nickname = document.getElementById('register-nickname').value.trim() || '旅行者';
+
+            if (!phone || !password) {
+                showError(t('请填写手机号和密码', 'Please fill phone and password'));
+                return;
+            }
+            if (password.length < 6) {
+                showError(t('密码至少 6 位', 'Password must be 6+ characters'));
+                return;
+            }
+            if (code !== '123456') {
+                showError(t('验证码错误', 'Invalid verification code'));
+                return;
+            }
+
+            try {
+                const result = LocalDB.signUp(phone, password, nickname);
+                currentUser = result.user;
+                localStorage.setItem('tripLite_user', JSON.stringify(currentUser));
+                showToast(t('注册成功！', 'Registration successful!'), 'success');
+                showMainPage();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function handleLogout() {
+            if (confirm(t('确定要退出登录吗？', 'Logout confirmed?'))) {
+                localStorage.removeItem('tripLite_user');
+                currentUser = null;
+                currentTrip = null;
+                showAuthPage();
+            }
+        }
+
+        // ==================== 出行计划管理 ====================
+        function renderTripList() {
+            const container = document.getElementById('trip-list-container');
+            if (!currentUser) {
+                container.innerHTML = '<div class="empty-state"><p>' + t('请先登录', 'Please login first') + '</p></div>';
+                return;
+            }
+
+            LocalDB.load();
+            const trips = LocalDB.trips.filter(t => t.userId === currentUser.phone);
+
+            if (trips.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p class="empty-state-text">${t('暂无出行计划，创建一个吧！', 'No trips yet, create one!')}</p>
+                    </div>
+                    <button class="add-trip-btn" onclick="showCreateModal()">
+                        <span>+</span>
+                        <span data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</span>
+                    </button>
+                `;
+                return;
+            }
+
+            let html = '';
+            trips.forEach(trip => {
+                const isActive = currentTrip && currentTrip.id === trip.id;
+                const tripDataEntry = LocalDB.tripData[trip.id];
+
+                // 计算状态和进度
+                const status = calculateTripStatus(tripDataEntry);
+                const statusCfg = statusConfig[status];
+                const statusLabel = statusCfg ? statusCfg.label[currentLang] : t('未开始', 'Not Started');
+
+                // 计算进度
+                const itineraryCompletion = tripDataEntry?.itineraryCompletion || calculateItineraryCompletion(tripDataEntry);
+                const packingCompletion = tripDataEntry?.packingCompletion || calculatePackingCompletion(tripDataEntry);
+                const overallProgress = Math.round((itineraryCompletion + packingCompletion) / 2);
+
+                const dateInfo = trip.startDate || t('未设置日期', 'No date');
+                const destInfo = trip.destination ? escapeHtml(trip.destination) : '';
+
+                html += `
+                    <div class="trip-item ${isActive ? 'active' : ''}" onclick="selectTrip('${trip.id}')">
+                        <div class="trip-item-info">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <span class="trip-item-title" style="flex: 1;">${escapeHtml(trip.name)}</span>
+                                <span style="padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: ${statusCfg.bg}; color: ${statusCfg.color};">${statusLabel}</span>
+                            </div>
+                            <div class="trip-item-date" style="margin-bottom: 6px;">📅 ${dateInfo}${destInfo ? ' · ' + destInfo : ''}</div>
+                            <div class="trip-progress" style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; height: 6px; background: #e8e8e8; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${overallProgress}%; height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 3px;"></div>
+                                </div>
+                                <span style="font-size: 11px; color: var(--text-muted); min-width: 32px;">${overallProgress}%</span>
+                            </div>
+                        </div>
+                        <div class="trip-item-actions">
+                            <button class="btn-edit" onclick="event.stopPropagation(); showEditModal('${trip.id}')">✏️</button>
+                            <button class="btn-delete" onclick="event.stopPropagation(); deleteTrip('${trip.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `<button class="add-trip-btn" onclick="showCreateModal()" style="margin-top: 10px;">
+                <span>+</span>
+                <span data-zh="新建出行计划" data-en="New Trip Plan">新建出行计划</span>
+            </button>`;
+
+            container.innerHTML = html;
+        }
+
+        // PRD V1.5 - 计算行程状态
+        function calculateTripStatus(tripDataEntry) {
+            if (!tripDataEntry) return 'not_started';
+
+            const hasDates = tripDataEntry.dates?.start && tripDataEntry.dates?.end;
+            const hasItinerary = tripDataEntry.itinerary && tripDataEntry.itinerary.length > 0;
+            const hasPackingList = tripDataEntry.packingList && tripDataEntry.packingList.length > 0;
+
+            // 检查是否有已完成的行程节点
+            let totalNodes = 0;
+            let filledNodes = 0;
+            if (hasItinerary) {
+                tripDataEntry.itinerary.forEach(day => {
+                    if (day.nodes) {
+                        day.nodes.forEach(node => {
+                            totalNodes++;
+                            if (node.location) filledNodes++;
+                        });
+                    }
+                });
+            }
+
+            // 检查打包完成度
+            let totalItems = 0;
+            let packedItems = 0;
+            if (hasPackingList) {
+                tripDataEntry.packingList.forEach(cat => {
+                    cat.items.forEach(item => {
+                        totalItems++;
+                        if (item.isPacked) packedItems++;
+                    });
+                });
+            }
+
+            const itineraryComplete = totalNodes > 0 && filledNodes === totalNodes;
+            const packingComplete = totalItems > 0 && packedItems === totalItems;
+
+            // 判断状态
+            if (!hasDates && !hasItinerary && !hasPackingList) {
+                return 'not_started';
+            } else if (hasDates && hasItinerary && hasPackingList && itineraryComplete && packingComplete) {
+                return 'completed';
+            } else if (hasDates && (hasItinerary || hasPackingList)) {
+                return 'in_progress';
+            } else {
+                return 'incomplete';
+            }
+        }
+
+        // PRD V1.5 - 计算行程完成度
+        function calculateItineraryCompletion(tripDataEntry) {
+            if (!tripDataEntry || !tripDataEntry.itinerary || tripDataEntry.itinerary.length === 0) return 0;
+
+            let totalNodes = 0;
+            let filledNodes = 0;
+            tripDataEntry.itinerary.forEach(day => {
+                if (day.nodes) {
+                    day.nodes.forEach(node => {
+                        totalNodes++;
+                        if (node.location) filledNodes++;
+                    });
+                }
+            });
+
+            return totalNodes > 0 ? Math.round((filledNodes / totalNodes) * 100) : 0;
+        }
+
+        // PRD V1.5 - 计算打包完成度
+        function calculatePackingCompletion(tripDataEntry) {
+            if (!tripDataEntry || !tripDataEntry.packingList || tripDataEntry.packingList.length === 0) return 0;
+
+            let totalItems = 0;
+            let packedItems = 0;
+            tripDataEntry.packingList.forEach(cat => {
+                cat.items.forEach(item => {
+                    totalItems++;
+                    if (item.isPacked) packedItems++;
+                });
+            });
+
+            return totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function selectTrip(tripId) {
+            LocalDB.load();
+            const trip = LocalDB.trips.find(t => t.id === tripId);
+            if (!trip) return;
+
+            currentTrip = trip;
+            localStorage.setItem('tripLite_currentTrip', JSON.stringify(trip));
+
+            // 加载行程数据（PRD V1.5 增强）
+            const data = LocalDB.tripData[tripId] || {
+                planId: tripId,
+                title: trip.name,
+                status: 'not_started',
+                dates: { start: trip.startDate || '', end: trip.endDate || '', totalDays: 0 },
+                itinerary: [],
+                packingList: JSON.parse(JSON.stringify(defaultPackingList)),
+                notes: '',
+                itineraryCompletion: 0,
+                packingCompletion: 0,
+                updatedAt: new Date().toISOString()
+            };
+
+            tripData = data;
+
+            // 填充表单
+            document.getElementById('destination').value = trip.destination || '';
+            document.getElementById('start-date').value = trip.startDate || '';
+            document.getElementById('end-date').value = trip.endDate || '';
+            document.getElementById('notes').value = data.notes || '';
+
+            updateDestinationInfo();
+            renderDayCards();
+            renderTripChecklist();
+
+            // 切换到行程页面
+            switchPage('plan');
+            renderTripList();
+        }
+
+        // V4.0 - 渲染模板选择器（从 globalTemplates 加载）
+        function renderTemplateSelector() {
+            const container = document.getElementById('template-selector');
+            const userTemplates = LocalDB.globalTemplates;
+            const systemTemplates = packingTemplates;
+
+            let html = '';
+
+            // 系统模板
+            Object.keys(systemTemplates).forEach(key => {
+                const tpl = systemTemplates[key];
+                html += `
+                    <div class="template-card" onclick="selectTemplate('${key}', 'system')" data-template-key="${key}" data-template-type="system">
+                        <span class="icon">${tpl.icon}</span>
+                        <span class="name">${currentLang === 'zh' ? tpl.name.zh : tpl.name.en}</span>
+                    </div>
+                `;
+            });
+
+            // 用户自定义模板
+            Object.keys(userTemplates).forEach(key => {
+                const tpl = userTemplates[key];
+                html += `
+                    <div class="template-card" onclick="selectTemplate('${key}', 'user')" data-template-key="${key}" data-template-type="user">
+                        <span class="icon">${tpl.icon || '📋'}</span>
+                        <span class="name">${escapeHtml(currentLang === 'zh' ? tpl.name.zh : tpl.name.en)}</span>
+                    </div>
+                `;
+            });
+
+            // 不选择模板选项
+            html += `
+                <div class="template-card" onclick="selectTemplate('', 'none')" data-template-key="" data-template-type="none" style="border: 1px dashed var(--border-color); background: transparent;">
+                    <span class="icon" style="opacity: 0.5;">⊘</span>
+                    <span class="name">${t('不使用', 'None')}</span>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // V3.1 - 选择模板
+        window.selectTemplate = function(templateKey, type) {
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            const selectedCard = document.querySelector(`[data-template-key="${templateKey}"][data-template-type="${type}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            document.getElementById('selected-template').value = type === 'none' ? '' : `${type}:${templateKey}`;
+        };
+
+        function showCreateModal() {
+            editingTripId = null;
+            document.getElementById('modal-title').textContent = t('新建出行计划', 'New Trip Plan');
+            document.getElementById('trip-name-input').value = '';
+            document.getElementById('selected-template').value = '';
+            renderTemplateSelector();
+            document.getElementById('trip-modal').classList.remove('hidden');
+        }
+
+        function showEditModal(tripId) {
+            editingTripId = tripId;
+            document.getElementById('modal-title').textContent = t('编辑出行计划', 'Edit Trip Plan');
+            LocalDB.load();
+            const trip = LocalDB.trips.find(t => t.id === tripId);
+            if (trip) {
+                document.getElementById('trip-name-input').value = trip.name;
+            }
+            document.getElementById('trip-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('trip-modal').classList.add('hidden');
+            editingTripId = null;
+        }
+
+        function confirmCreateTrip() {
+            const name = document.getElementById('trip-name-input').value.trim();
+            if (!name) {
+                showToast(t('请输入计划名称', 'Please enter plan name'), 'error');
+                return;
+            }
+
+            // V4.0: 获取选择的模板（从 globalTemplates 导入）
+            const templateValue = document.getElementById('selected-template').value;
+            let selectedPackingList = JSON.parse(JSON.stringify(defaultPackingList));
+
+            if (templateValue) {
+                const [type, key] = templateValue.split(':');
+                if (type === 'system' && packingTemplates[key]) {
+                    // 从系统模板克隆
+                    selectedPackingList = JSON.parse(JSON.stringify(packingTemplates[key].items));
+                } else if (type === 'user') {
+                    // 从用户自定义模板克隆
+                    const userTemplate = LocalDB.globalTemplates[key];
+                    if (userTemplate) {
+                        selectedPackingList = JSON.parse(JSON.stringify(userTemplate.items));
+                    }
+                }
+            }
+
+            LocalDB.load();
+
+            if (editingTripId) {
+                // 编辑模式
+                const idx = LocalDB.trips.findIndex(t => t.id === editingTripId);
+                if (idx >= 0) {
+                    LocalDB.trips[idx].name = name;
+                    LocalDB.save();
+                }
+                showToast(t('更新成功！', 'Updated!'), 'success');
+            } else {
+                // 新建模式 - 克隆模板到行程实例
+                const newTrip = {
+                    id: generateId(),
+                    userId: currentUser.phone,
+                    name: name,
+                    createdAt: new Date().toISOString()
+                };
+                LocalDB.trips.push(newTrip);
+                LocalDB.tripData[newTrip.id] = {
+                    planId: newTrip.id,
+                    title: name,
+                    status: 'not_started',
+                    dates: { start: '', end: '', totalDays: 0 },
+                    itinerary: [],
+                    packingList: selectedPackingList, // 克隆的实例副本
+                    notes: '',
+                    itineraryCompletion: 0,
+                    packingCompletion: 0,
+                    updatedAt: new Date().toISOString()
+                };
+                LocalDB.save();
+                currentTrip = newTrip;
+                tripData = LocalDB.tripData[newTrip.id];
+                showToast(t('创建成功！', 'Created!'), 'success');
+            }
+
+            closeModal();
+            renderTripList();
+        }
+
+        function deleteTrip(tripId) {
+            if (!confirm(t('确定要删除这个出行计划吗？', 'Delete this trip?'))) return;
+
+            LocalDB.load();
+            LocalDB.trips = LocalDB.trips.filter(t => t.id !== tripId);
+            delete LocalDB.tripData[tripId];
+            LocalDB.save();
+
+            if (currentTrip && currentTrip.id === tripId) {
+                currentTrip = null;
+            }
+
+            showToast(t('删除成功', 'Deleted'), 'success');
+            renderTripList();
+        }
+
+        function backToTripList() {
+            switchPage('trips');
+            renderTripList();
+        }
+
+        // ==================== 行程信息保存 ====================
+        function saveTripInfo() {
+            if (!currentTrip) return;
+
+            const destination = document.getElementById('destination').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            // TC-12: 验证日期逻辑
+            if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+                showToast(t('结束日期不能早于开始日期', 'End date cannot be earlier than start date'), 'error');
+                return;
+            }
+
+            // 更新 trips 表
+            LocalDB.load();
+            const idx = LocalDB.trips.findIndex(t => t.id === currentTrip.id);
+            if (idx >= 0) {
+                LocalDB.trips[idx].destination = destination;
+                LocalDB.trips[idx].startDate = startDate;
+                LocalDB.trips[idx].endDate = endDate;
+
+                // 更新 tripData
+                if (startDate && endDate) {
+                    const totalDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000*60*60*24)) + 1;
+                    tripData.dates = { start: startDate, end: endDate, totalDays: totalDays };
+
+                    // 自动生成天数卡片（PRD V1.5: 带时段骨架）
+                    generateDayCards(totalDays);
+                }
+
+                LocalDB.tripData[currentTrip.id] = tripData;
+                LocalDB.save();
+                currentTrip = LocalDB.trips[idx];
+            }
+
+            updateDestinationInfo();
+            updateCompletionStatus();
+            renderTripList();
+            showToast(t('保存成功！', 'Saved!'), 'success');
+        }
+
+        function saveTripNotes() {
+            if (!currentTrip) return;
+
+            tripData.notes = document.getElementById('notes').value;
+            LocalDB.load();
+            LocalDB.tripData[currentTrip.id] = tripData;
+            LocalDB.save();
+
+            showToast(t('备注已保存！', 'Notes saved!'), 'success');
+        }
+
+        function updateDestinationInfo() {
+            const dest = document.getElementById('destination').value;
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            if (currentTrip) {
+                document.getElementById('current-trip-name').textContent = currentTrip.name || t('行程详情', 'Trip Details');
+            }
+
+            if (dest) {
+                document.getElementById('dest-name').textContent = dest;
+                document.getElementById('dest-icon').textContent = '📍';
+            } else {
+                document.getElementById('dest-name').textContent = t('未设置目的地', 'No destination');
+                document.getElementById('dest-icon').textContent = '🏖️';
+            }
+
+            if (start && end) {
+                const days = Math.ceil((new Date(end) - new Date(start)) / (1000*60*60*24)) + 1;
+                document.getElementById('dest-dates').textContent = currentLang === 'zh'
+                    ? `${start} 至 ${end}（共${days}天）`
+                    : `${start} to ${end} (${days} days)`;
+            } else {
+                document.getElementById('dest-dates').textContent = t('暂无行程日期', 'No dates');
+            }
+        }
+
+        // ==================== 行程卡片（PRD V1.1 结构化） ====================
+        // PRD V1.5 - 自动生成行程骨架（上午/下午/晚上时段）
+        function generateDayCards(totalDays) {
+            if (!tripData.itinerary || tripData.itinerary.length === 0) {
+                // 初始化每天的行程，包含三个时段骨架
+                tripData.itinerary = [];
+                const periods = [
+                    { time: '上午', defaultLocation: '' },
+                    { time: '下午', defaultLocation: '' },
+                    { time: '晚上', defaultLocation: '' }
+                ];
+
+                for (let i = 0; i < totalDays; i++) {
+                    const dayNodes = periods.map(period => ({
+                        nodeId: generateId(),
+                        time: period.time,
+                        location: '',
+                        note: ''
+                    }));
+
+                    tripData.itinerary.push({
+                        dayIndex: i + 1,
+                        date: '',
+                        nodes: dayNodes
+                    });
+                }
+            }
+            saveTripData();
+            renderDayCards();
+        }
+
+        function renderDayCards() {
+            const container = document.getElementById('day-cards-container');
+            const itinerary = tripData.itinerary || [];
+
+            if (itinerary.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <p class="empty-state-text">${t('请先设置出发和返回日期', 'Please set departure and return dates')}</p>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">${t('设置日期后将自动生成每日行程骨架', 'Daily itinerary skeleton will be generated after setting dates')}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            itinerary.forEach((day, index) => {
+                const dayDate = day.date || `${t('第', 'Day')} ${day.dayIndex}${t('天', '')}`;
+                const hasContent = day.nodes && day.nodes.some(n => n.location);
+
+                html += `
+                    <div class="day-card" style="${!hasContent ? 'opacity: 0.8;' : ''}">
+                        <div class="day-card-header">
+                            <span class="day-card-title">📅 ${dayDate}</span>
+                            ${!hasContent ? '<span style="font-size: 11px; color: var(--text-muted);">' + t('待填充', 'To fill') + '</span>' : ''}
+                        </div>
+                        <div id="day-${index}-nodes">
+                            ${renderNodes(day.nodes, index)}
+                        </div>
+                        <button class="add-node-btn" onclick="openNodeModal(${index})">
+                            <span>+</span>
+                            <span data-zh="添加行程" data-en="Add Itinerary">添加行程</span>
+                        </button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderNodes(nodes, dayIndex) {
+            if (!nodes || nodes.length === 0) {
+                return `<p style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 12px;">${t('暂无行程安排', 'No itinerary yet')}</p>`;
+            }
+
+            // 按时间排序
+            const sortedNodes = [...nodes].sort((a, b) => {
+                if (a.time === '全天') return -1;
+                if (b.time === '全天') return 1;
+                return a.time.localeCompare(b.time);
+            });
+
+            let html = '';
+            sortedNodes.forEach((node, nodeIndex) => {
+                const originalIndex = nodes.findIndex(n => n.nodeId === node.nodeId);
+                html += `
+                    <div class="itinerary-node">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div class="itinerary-node-time">${escapeHtml(node.time)}</div>
+                                <div class="itinerary-node-location">${escapeHtml(node.location)}</div>
+                                ${node.note ? `<div class="itinerary-node-note">${escapeHtml(node.note)}</div>` : ''}
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-icon" onclick="editNode(${dayIndex}, ${originalIndex})">✏️</button>
+                                <button class="btn-icon" onclick="deleteNode(${dayIndex}, ${originalIndex})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // ==================== 行程节点操作 ====================
+        function openNodeModal(dayIndex) {
+            currentDayIndex = dayIndex;
+            // V3.1: 时间选择器默认值为当前整点
+            const now = new Date();
+            const defaultTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('node-time').value = defaultTime;
+            document.getElementById('node-location').value = '';
+            document.getElementById('node-note').value = '';
+            document.getElementById('current-day-index').value = dayIndex;
+            document.getElementById('edit-node-index').value = '';
+
+            // 重置为新增模式
+            document.getElementById('node-modal-title').textContent = t('添加行程', 'Add Itinerary');
+            const confirmBtn = document.getElementById('node-modal-confirm-btn');
+            confirmBtn.textContent = t('添加', 'Add');
+            confirmBtn.onclick = confirmAddNode;
+
+            document.getElementById('node-modal').classList.remove('hidden');
+        }
+
+        function closeNodeModal() {
+            document.getElementById('node-modal').classList.add('hidden');
+            // 清空编辑状态
+            document.getElementById('edit-node-index').value = '';
+        }
+
+        function confirmAddNode() {
+            const time = document.getElementById('node-time').value.trim() || '09:00';
+            const location = document.getElementById('node-location').value.trim();
+            const note = document.getElementById('node-note').value.trim();
+
+            if (!location) {
+                showToast(t('地点必填', 'Location is required'), 'error');
+                return;
+            }
+
+            const newNode = {
+                nodeId: generateId(),
+                time: time,
+                location: location,
+                note: note
+            };
+
+            const dayIndex = parseInt(document.getElementById('current-day-index').value);
+            if (!tripData.itinerary[dayIndex].nodes) {
+                tripData.itinerary[dayIndex].nodes = [];
+            }
+            tripData.itinerary[dayIndex].nodes.push(newNode);
+
+            // TC-03: 添加后自动排序
+            sortNodesByTime(tripData.itinerary[dayIndex].nodes);
+
+            // PRD V1.5: 更新完成度状态
+            updateCompletionStatus();
+            saveTripData();
+            renderDayCards();
+            closeNodeModal();
+            renderTripList(); // 更新首页状态和进度
+            showToast(t('添加成功！', 'Added!'), 'success');
+        }
+
+        // TC-03: 按时间排序节点（全天排在最前）
+        function sortNodesByTime(nodes) {
+            nodes.sort((a, b) => {
+                if (a.time === '全天' && b.time !== '全天') return -1;
+                if (b.time === '全天' && a.time !== '全天') return 1;
+                return a.time.localeCompare(b.time, undefined, { numeric: true });
+            });
+        }
+
+        function editNode(dayIndex, nodeIndex) {
+            const node = tripData.itinerary[dayIndex].nodes[nodeIndex];
+            // V3.1: 时间选择器格式处理 - 如果是"全天"则设为 09:00
+            let timeValue = node.time;
+            if (node.time === '全天' || !node.time.match(/^\d{2}:\d{2}$/)) {
+                timeValue = '09:00';
+            }
+            document.getElementById('node-time').value = timeValue;
+            document.getElementById('node-location').value = node.location;
+            document.getElementById('node-note').value = node.note || '';
+            document.getElementById('current-day-index').value = dayIndex;
+            document.getElementById('edit-node-index').value = nodeIndex;
+
+            // 切换到编辑模式
+            document.getElementById('node-modal-title').textContent = t('编辑行程', 'Edit Itinerary');
+            const confirmBtn = document.getElementById('node-modal-confirm-btn');
+            confirmBtn.textContent = t('保存', 'Save');
+            confirmBtn.onclick = confirmEditNode;
+
+            document.getElementById('node-modal').classList.remove('hidden');
+        }
+
+        function confirmEditNode() {
+            const editIndex = parseInt(document.getElementById('edit-node-index').value);
+            const dayIndex = parseInt(document.getElementById('current-day-index').value);
+            const time = document.getElementById('node-time').value.trim() || '09:00';
+            const location = document.getElementById('node-location').value.trim();
+            const note = document.getElementById('node-note').value.trim();
+
+            if (!location) {
+                showToast(t('地点必填', 'Location is required'), 'error');
+                return;
+            }
+
+            // 更新原有节点
+            tripData.itinerary[dayIndex].nodes[editIndex] = {
+                ...tripData.itinerary[dayIndex].nodes[editIndex],
+                time: time,
+                location: location,
+                note: note
+            };
+
+            // PRD V1.5: 更新完成度状态
+            updateCompletionStatus();
+            saveTripData();
+            renderDayCards();
+            closeNodeModal();
+            renderTripList(); // 更新首页状态和进度
+            showToast(t('更新成功！', 'Updated!'), 'success');
+        }
+
+        function deleteNode(dayIndex, nodeIndex) {
+            if (!confirm(t('确定要删除这个行程吗？', 'Delete this itinerary?'))) return;
+            tripData.itinerary[dayIndex].nodes.splice(nodeIndex, 1);
+            // PRD V1.5: 更新完成度状态
+            updateCompletionStatus();
+            saveTripData();
+            renderDayCards();
+            renderTripList(); // 更新首页状态和进度
+            showToast(t('删除成功', 'Deleted'), 'success');
+        }
+
+        function saveTripData() {
+            if (!currentTrip) return;
+            LocalDB.load();
+            LocalDB.tripData[currentTrip.id] = tripData;
+            LocalDB.save();
+        }
+
+        // ==================== V4.0 打包清单模板库 ====================
+
+        // V4.0: 渲染模板库视图（第一级）
+        function renderTemplateLibrary() {
+            const systemContainer = document.getElementById('system-templates-grid');
+            const userContainer = document.getElementById('user-templates-grid');
+
+            const categoryNames = {
+                documents: { zh: '📄 证件', en: '📄 Documents' },
+                clothes: { zh: '👔 衣物', en: '👔 Clothes' },
+                electronics: { zh: '🔌 电子', en: '🔌 Electronics' },
+                toiletries: { zh: '🧴 洗漱', en: '🧴 Toiletries' },
+                medicine: { zh: '💊 药品', en: '💊 Medicine' },
+                other: { zh: '📦 其他', en: '📦 Other' }
+            };
+
+            // 渲染系统预设模板
+            let systemHtml = '';
+            Object.keys(packingTemplates).forEach(key => {
+                const tpl = packingTemplates[key];
+                let totalItems = 0;
+                tpl.items.forEach(cat => { totalItems += cat.items.length; });
+                const name = currentLang === 'zh' ? tpl.name.zh : tpl.name.en;
+
+                systemHtml += `
+                    <div class="template-library-card" onclick="editTemplate('${key}', 'system')">
+                        <span class="icon">${tpl.icon}</span>
+                        <span class="name">${name}</span>
+                        <span class="count">${totalItems} 个物品</span>
+                    </div>
+                `;
+            });
+            systemContainer.innerHTML = systemHtml;
+
+            // 渲染用户自定义模板
+            const userTemplates = LocalDB.getAllTemplates();
+            let userHtml = '';
+            Object.keys(userTemplates).forEach(key => {
+                const tpl = userTemplates[key];
+                let totalItems = 0;
+                tpl.items.forEach(cat => { totalItems += cat.items.length; });
+                const name = currentLang === 'zh' ? tpl.name.zh : tpl.name.en;
+
+                userHtml += `
+                    <div class="template-library-card" onclick="editTemplate('${key}', 'user')">
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteCustomTemplate('${key}')" title="删除模板">🗑️</button>
+                        <span class="icon">${tpl.icon || '📋'}</span>
+                        <span class="name">${name}</span>
+                        <span class="count">${totalItems} 个物品</span>
+                    </div>
+                `;
+            });
+
+            if (Object.keys(userTemplates).length === 0) {
+                userHtml = `<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">${currentLang === 'zh' ? '暂无自定义模板，点击"+ 新建模板"开始创建' : 'No custom templates yet. Click "+ New Template" to start creating.'}</div>`;
+            }
+            userContainer.innerHTML = userHtml;
+        }
+
+        // V4.0: 编辑模板（进入二级视图）
+        window.editTemplate = function(templateKey, type) {
+            currentTemplateMode = 'edit';
+            editingTemplateKey = type === 'system' ? templateKey : 'user:' + templateKey;
+
+            const tpl = type === 'system' ? packingTemplates[templateKey] : LocalDB.getTemplate(templateKey);
+            if (!tpl) return;
+
+            const name = currentLang === 'zh' ? tpl.name.zh : tpl.name.en;
+            document.getElementById('editing-template-name').textContent = name;
+
+            renderTemplateEditView(tpl);
+
+            document.getElementById('checklist-library-view').classList.add('hidden');
+            document.getElementById('checklist-edit-view').classList.remove('hidden');
+        };
+
+        // V4.0: 渲染模板编辑视图（第二级 - 平铺展示）
+        function renderTemplateEditView(tpl) {
+            const container = document.getElementById('template-edit-container');
+            const categoryNames = {
+                documents: { zh: '📄 证件', en: '📄 Documents' },
+                clothes: { zh: '👔 衣物', en: '👔 Clothes' },
+                electronics: { zh: '🔌 电子', en: '🔌 Electronics' },
+                toiletries: { zh: '🧴 洗漱', en: '🧴 Toiletries' },
+                medicine: { zh: '💊 药品', en: '💊 Medicine' },
+                other: { zh: '📦 其他', en: '📦 Other' }
+            };
+
+            let html = '';
+            tpl.items.forEach(cat => {
+                const categoryName = categoryNames[cat.category] ? categoryNames[cat.category][currentLang] : cat.category;
+
+                html += `
+                    <div class="template-edit-category">
+                        <div class="template-edit-category-header">
+                            <span class="template-edit-category-name">${categoryName}</span>
+                            <span class="template-edit-category-count">${cat.items.length} 个物品</span>
+                        </div>
+                        <div class="template-edit-items">
+                `;
+
+                cat.items.forEach((item, index) => {
+                    const itemName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
+                    html += `
+                        <div class="template-edit-item">
+                            <span class="template-edit-item-text">${escapeHtml(itemName)}</span>
+                            <div class="template-edit-item-actions">
+                                <button class="btn-edit-item" onclick="editTemplateItem('${cat.category}', ${index})">✏️</button>
+                                <button class="btn-delete-item" onclick="deleteTemplateItem('${cat.category}', ${index})">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // V4.0: 返回模板库
+        window.backToTemplateLibrary = function() {
+            currentTemplateMode = 'view';
+            editingTemplateKey = null;
+            document.getElementById('checklist-edit-view').classList.add('hidden');
+            document.getElementById('checklist-library-view').classList.remove('hidden');
+            renderTemplateLibrary();
+        };
+
+        // V4.0: 保存模板修改
+        window.saveTemplateChanges = function() {
+            showToast(currentLang === 'zh' ? '模板已保存' : 'Template saved', 'success');
+        };
+
+        // V4.0: 添加模板物品
+        window.addTemplateItem = function() {
+            const input = document.getElementById('new-template-item');
+            const category = document.getElementById('new-template-item-category').value;
+            const text = input.value.trim();
+
+            if (!text || !editingTemplateKey) return;
+
+            const [type, key] = editingTemplateKey.split(':');
+            const tpl = type === 'system' ? packingTemplates[key] : LocalDB.getTemplate(key);
+            if (!tpl) return;
+
+            const cat = tpl.items.find(c => c.category === category);
+            if (cat) {
+                cat.items.push({
+                    id: generateId(),
+                    name: { zh: text, en: text },
+                    isPacked: false
+                });
+                renderTemplateEditView(tpl);
+                input.value = '';
+                showToast(currentLang === 'zh' ? '已添加' : 'Added', 'success');
+            }
+        };
+
+        // V4.0: 删除自定义模板
+        window.deleteCustomTemplate = function(templateId) {
+            if (!confirm(currentLang === 'zh' ? '确定要删除这个自定义模板吗？' : 'Delete this custom template?')) return;
+            LocalDB.deleteTemplate(templateId);
+            renderTemplateLibrary();
+        };
+
+        // V4.0: 显示创建模板弹窗
+        window.showCreateTemplateModal = function() {
+            const templateName = prompt(currentLang === 'zh' ? '请输入模板名称：' : 'Enter template name:');
+            if (!templateName) return;
+
+            const templateIcon = prompt(currentLang === 'zh' ? '选择模板图标（输入 emoji）：' : 'Enter template icon (emoji):', '📋');
+
+            const newTemplate = {
+                id: generateId(),
+                name: { zh: templateName, en: templateName },
+                icon: templateIcon || '📋',
+                items: JSON.parse(JSON.stringify(defaultPackingList))
+            };
+
+            LocalDB.saveTemplate(newTemplate.id, newTemplate);
+            renderTemplateLibrary();
+            showToast(currentLang === 'zh' ? '模板已创建' : 'Template created', 'success');
+        };
+
+        // V4.0: 编辑模板物品
+        window.editTemplateItem = function(category, itemIndex) {
+            const [type, key] = editingTemplateKey.split(':');
+            const tpl = type === 'system' ? packingTemplates[key] : LocalDB.getTemplate(key);
+            if (!tpl) return;
+
+            const cat = tpl.items.find(c => c.category === category);
+            if (!cat || !cat.items[itemIndex]) return;
+
+            const newItemName = prompt(currentLang === 'zh' ? '修改物品名称：' : 'Edit item name:', cat.items[itemIndex].name.zh);
+            if (newItemName) {
+                cat.items[itemIndex].name = { zh: newItemName, en: newItemName };
+                renderTemplateEditView(tpl);
+            }
+        };
+
+        // V4.0: 删除模板物品
+        window.deleteTemplateItem = function(category, itemIndex) {
+            const [type, key] = editingTemplateKey.split(':');
+            const tpl = type === 'system' ? packingTemplates[key] : LocalDB.getTemplate(key);
+            if (!tpl) return;
+
+            const cat = tpl.items.find(c => c.category === category);
+            if (!cat || !cat.items[itemIndex]) return;
+
+            if (confirm(currentLang === 'zh' ? '确定要删除这个物品吗？' : 'Delete this item?')) {
+                cat.items.splice(itemIndex, 1);
+                renderTemplateEditView(tpl);
+            }
+        };
+
+        function toggleItem(category, itemId) {
+            const cat = tripData.packingList.find(c => c.category === category);
+            if (cat) {
+                const item = cat.items.find(i => i.id === itemId);
+                if (item) {
+                    item.isPacked = !item.isPacked;
+                    updateCompletionStatus();
+                    saveTripData();
+                    renderTripChecklist();
+                    renderTripList(); // 更新首页进度条
+                }
+            }
+        }
+
+        function addCustomItem() {
+            const input = document.getElementById('new-item');
+            const category = document.getElementById('new-item-category').value;
+            const text = input.value.trim();
+
+            if (text) {
+                const cat = tripData.packingList.find(c => c.category === category);
+                if (cat) {
+                    cat.items.push({
+                        id: generateId(),
+                        name: { zh: text, en: text },
+                        isPacked: false
+                    });
+                    updateCompletionStatus();
+                    saveTripData();
+                    input.value = '';
+                    showToast(t('添加成功！', 'Added!'), 'success');
+                }
+            }
+        }
+
+        function updateProgress(packed, total) {
+            const percent = total > 0 ? Math.round((packed / total) * 100) : 0;
+            document.getElementById('progress-text').textContent = percent + '%';
+            document.getElementById('progress-fill').style.width = percent + '%';
+        }
+
+        // V3.1 - 行程详情页清单（智能折叠未完成分类）
+        function renderTripChecklist() {
+            const container = document.getElementById('trip-checklist-container');
+            const packingList = tripData.packingList || [];
+            const categoryNames = {
+                documents: { zh: '📄 证件', en: '📄 Documents' },
+                clothes: { zh: '👔 衣物', en: '👔 Clothes' },
+                electronics: { zh: '🔌 电子', en: '🔌 Electronics' },
+                toiletries: { zh: '🧴 洗漱', en: '🧴 Toiletries' },
+                medicine: { zh: '💊 药品', en: '💊 Medicine' },
+                other: { zh: '📦 其他', en: '📦 Other' }
+            };
+
+            let html = '';
+            packingList.forEach(cat => {
+                if (cat.items.length > 0) {
+                    const packedCount = cat.items.filter(item => item.isPacked).length;
+                    const totalCount = cat.items.length;
+                    const isAllPacked = packedCount === totalCount;
+                    const categoryName = categoryNames[cat.category] ? categoryNames[cat.category][currentLang] : cat.category;
+
+                    // V3.1: 添加可折叠分类标题，默认展开未完成分类
+                    html += `
+                        <div class="category-title" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" onclick="toggleTripChecklistCategory('${cat.category}')">
+                            <span>${categoryName} <span style="font-size: 12px; opacity: 0.7;">(${packedCount}/${totalCount})</span></span>
+                            <span id="trip-checklist-arrow-${cat.category}" style="font-size: 12px;">${isAllPacked ? '▶️' : '🔽'}</span>
+                        </div>
+                        <div id="trip-checklist-cat-${cat.category}" class="${isAllPacked ? 'hidden' : ''}">
+                    `;
+                    cat.items.forEach(item => {
+                        html += `
+                            <div class="checklist-item ${item.isPacked ? 'checked' : ''}" style="pointer-events: none;">
+                                <input type="checkbox" ${item.isPacked ? 'checked' : ''} disabled>
+                                <span>${typeof item.name === 'object' ? item.name[currentLang] : item.name}</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+            });
+
+            if (html === '') {
+                html = `<div class="empty-state"><p>${t('暂无物品', 'No items')}</p></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // V3.1: 切换行程详情页清单分类展开/收起状态
+        window.toggleTripChecklistCategory = function(category) {
+            const contentEl = document.getElementById(`trip-checklist-cat-${category}`);
+            const arrowEl = document.getElementById(`trip-checklist-arrow-${category}`);
+            if (contentEl && arrowEl) {
+                contentEl.classList.toggle('hidden');
+                arrowEl.textContent = contentEl.classList.contains('hidden') ? '▶️' : '🔽';
+            }
+        };
+
+        // PRD V1.5 - 应用场景化打包模板
+        function applyPackingTemplate(templateKey) {
+            if (!currentTrip) {
+                showToast(t('请先选择或创建一个出行计划', 'Please select or create a trip first'), 'error');
+                return;
+            }
+
+            const template = packingTemplates[templateKey];
+            if (!template) return;
+
+            if (!confirm(currentLang === 'zh'
+                ? `确定要应用「${template.name.zh}」模板吗？这将替换当前的打包清单。`
+                : `Are you sure you want to apply "${template.name.en}" template? This will replace your current packing list.`)) {
+                return;
+            }
+
+            // 深拷贝模板数据
+            tripData.packingList = JSON.parse(JSON.stringify(template.items));
+
+            // 计算并完成度更新
+            updateCompletionStatus();
+            saveTripDataWithFeedback();
+            renderTripChecklist();
+
+            showToast(currentLang === 'zh'
+                ? `已应用「${template.name.zh}」模板`
+                : `Applied "${template.name.en}" template`, 'success');
+        }
+
+        // PRD V1.5 - 更新完成度状态
+        function updateCompletionStatus() {
+            if (!currentTrip) return;
+
+            tripData.itineraryCompletion = calculateItineraryCompletion(tripData);
+            tripData.packingCompletion = calculatePackingCompletion(tripData);
+            tripData.status = calculateTripStatus(tripData);
+            tripData.updatedAt = new Date().toISOString();
+        }
+
+        // PRD V1.5 - 自动保存（带反馈）
+        let saveTimeout = null;
+        function autoSave() {
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveTripDataWithFeedback();
+            }, 500);
+        }
+
+        function saveTripDataWithFeedback() {
+            if (!currentTrip) return;
+
+            updateCompletionStatus();
+            LocalDB.load();
+            LocalDB.tripData[currentTrip.id] = tripData;
+            LocalDB.save();
+
+            // 更新首页卡片显示
+            renderTripList();
+        }
+
+        function goToChecklistPage() {
+            switchPage('checklist');
+        }
+
+        // V3.1 - 保存为模板功能
+        window.showSaveTemplateModal = function() {
+            if (!currentTrip) {
+                showToast(t('请先选择一个出行计划', 'Please select a trip first'), 'error');
+                return;
+            }
+            document.getElementById('template-name-input').value = '';
+            document.getElementById('save-template-modal').classList.remove('hidden');
+        };
+
+        window.closeSaveTemplateModal = function() {
+            document.getElementById('save-template-modal').classList.add('hidden');
+        };
+
+        window.confirmSaveTemplate = function() {
+            const templateName = document.getElementById('template-name-input').value.trim();
+            const templateIcon = document.getElementById('template-icon-select').value;
+
+            if (!templateName) {
+                showToast(t('请输入模板名称', 'Please enter template name'), 'error');
+                return;
+            }
+
+            // 构建模板数据
+            const template = {
+                id: generateId(),
+                name: { zh: templateName, en: templateName },
+                icon: templateIcon,
+                items: JSON.parse(JSON.stringify(tripData.packingList))
+            };
+
+            // 保存到 LocalDB
+            LocalDB.saveTemplate(template.id, template);
+
+            closeSaveTemplateModal();
+            showToast(t('模板已保存！', 'Template saved!'), 'success');
+        };
+
+        // V3.1 - 重置清单二次确认
+        let resetPending = false;
+        window.resetPackingList = function() {
+            if (!currentTrip) {
+                showToast(t('请先选择一个出行计划', 'Please select a trip first'), 'error');
+                return;
+            }
+            document.getElementById('reset-confirm-modal').classList.remove('hidden');
+        };
+
+        window.closeResetConfirmModal = function() {
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+        };
+
+        window.confirmResetPackingList = function() {
+            // 重置为默认打包清单
+            tripData.packingList = JSON.parse(JSON.stringify(defaultPackingList));
+            updateCompletionStatus();
+            saveTripData();
+            renderTripList();
+            closeResetConfirmModal();
+            showToast(t('清单已重置', 'List reset'), 'success');
+        };
+
+        // ==================== 页面切换 ====================
+        function switchPage(page) {
+            document.getElementById('page-trips').classList.add('hidden');
+            document.getElementById('page-plan').classList.add('hidden');
+            document.getElementById('page-checklist').classList.add('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('page-' + page).classList.remove('hidden');
+
+            if (page === 'trips') {
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                renderTripList();
+            } else if (page === 'plan') {
+                renderDayCards();
+                renderTripChecklist();
+            } else if (page === 'checklist') {
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                // V4.0: 打包清单页显示模板库视图
+                renderTemplateLibrary();
+            }
+        }
+
+        // ==================== 自动保存 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            // PRD V1.5 - 自动保存监听器（表单输入 blur 时触发）
+            const autoSaveInputs = ['#destination', '#start-date', '#end-date', '#notes'];
+            autoSaveInputs.forEach(selector => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    el.addEventListener('blur', autoSave);
+                }
+            });
+
+            // PRD V1.5 - 日期选择时立即保存
+            const dateInputs = ['#start-date', '#end-date'];
+            dateInputs.forEach(selector => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    el.addEventListener('change', function() {
+                        saveTripInfo();
+                    });
+                }
+            });
+        });
+
+        // ==================== 启动 ====================
+        init();
+    </script>
+</body>
+</html>
